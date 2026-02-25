@@ -23,7 +23,8 @@ function generateToken(): string {
 }
 
 const MAX_ANSWERS = 10;
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_RAW_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB (raw, before compression)
+const MAX_COMPRESSED_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB (after compression)
 
 export default function CreatePage() {
     const { user, loading } = useAuth();
@@ -76,8 +77,8 @@ export default function CreatePage() {
         if (!file) return;
         setImageError(null);
 
-        if (file.size > MAX_FILE_SIZE_BYTES) {
-            setImageError("画像は5MB以下にしてください。");
+        if (file.size > MAX_RAW_FILE_SIZE_BYTES) {
+            setImageError("画像は20MB以下にしてください。");
             e.target.value = "";
             return;
         }
@@ -112,6 +113,13 @@ export default function CreatePage() {
         try {
             // Resize image client-side before upload (~1MB target)
             const uploadFile = await resizeImageToTarget(imageFile);
+
+            // Check compressed size
+            if (uploadFile.size > MAX_COMPRESSED_SIZE_BYTES) {
+                setImageError("圧縮後のサイズが5MBを超えています。より小さい画像をお試しください。");
+                setSubmitting(false);
+                return;
+            }
 
             const imageRef = ref(storage!, `puzzles/${Date.now()}_${uploadFile.name}`);
             await uploadBytes(imageRef, uploadFile);
@@ -155,10 +163,10 @@ export default function CreatePage() {
     }
 
     function shareOnX() {
-        const text = `🧩 TakaraWalkに新しい謎を投稿しました！「${title.trim()}」\n先着1名のみがクリアできる！挑戦してね 👉`;
-        const url = createdUrl || "";
-        const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-        window.open(shareUrl, "_blank");
+        // Navigate to puzzle page so Twitter's OG crawler can resolve metadata
+        if (createdId) {
+            router.push(`/puzzle/${createdId}?share=x`);
+        }
     }
 
     async function handleDownloadQr() {
@@ -341,7 +349,7 @@ export default function CreatePage() {
                         <label className="block text-sm font-bold text-text-secondary uppercase tracking-wider">
                             謎の画像
                         </label>
-                        <span className="text-xs text-text-muted">最大 5MB</span>
+                        <span className="text-xs text-text-muted">圧縮後5MB以内</span>
                     </div>
                     <input
                         ref={fileInputRef}

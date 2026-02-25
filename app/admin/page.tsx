@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { signInWithGoogle } from "@/lib/auth";
 import { db, storage } from "@/lib/firebase";
@@ -14,7 +15,7 @@ import {
     where,
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
-import { FiTrash2, FiAlertTriangle, FiUser, FiFileText } from "react-icons/fi";
+import { FiTrash2, FiAlertTriangle, FiUser, FiFileText, FiExternalLink } from "react-icons/fi";
 
 interface PuzzleItem {
     id: string;
@@ -56,7 +57,7 @@ export default function AdminPage() {
                 );
                 const puzzlesSnap = await getDocs(puzzlesQuery);
                 const puzzleList: PuzzleItem[] = [];
-                const userMap = new Map<string, UserSummary>();
+                const puzzleCountMap = new Map<string, number>();
 
                 puzzlesSnap.forEach((docSnap) => {
                     const data = docSnap.data();
@@ -71,15 +72,30 @@ export default function AdminPage() {
                         answerType: data.answerType,
                     });
 
-                    // Build user summary
+                    // Count puzzles per user
                     const uid = data.creatorId;
-                    if (userMap.has(uid)) {
-                        userMap.get(uid)!.puzzleCount++;
-                    } else {
-                        userMap.set(uid, {
-                            uid,
-                            name: data.creatorName,
-                            puzzleCount: 1,
+                    puzzleCountMap.set(uid, (puzzleCountMap.get(uid) || 0) + 1);
+                });
+
+                // Fetch all users from users collection
+                const usersSnap = await getDocs(collection(db!, "users"));
+                const userMap = new Map<string, UserSummary>();
+                usersSnap.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    userMap.set(docSnap.id, {
+                        uid: docSnap.id,
+                        name: data.displayName || "匿名",
+                        puzzleCount: puzzleCountMap.get(docSnap.id) || 0,
+                    });
+                });
+
+                // Also include users who posted puzzles but may not have a users doc
+                puzzleList.forEach((p) => {
+                    if (!userMap.has(p.creatorId)) {
+                        userMap.set(p.creatorId, {
+                            uid: p.creatorId,
+                            name: p.creatorName,
+                            puzzleCount: puzzleCountMap.get(p.creatorId) || 0,
                         });
                     }
                 });
@@ -252,11 +268,16 @@ export default function AdminPage() {
                                 className="cyber-card flex items-center justify-between p-4"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-text-primary truncate">
+                                    <Link href={`/puzzle/${p.id}`} className="font-bold text-text-primary truncate block hover:text-neon-blue transition-colors">
                                         {p.title}
-                                    </h3>
+                                        <FiExternalLink size={12} className="inline ml-1 opacity-50" />
+                                    </Link>
                                     <p className="text-xs text-text-muted mt-1">
-                                        by {p.creatorName} • {p.answerType} •{" "}
+                                        by{" "}
+                                        <Link href={`/user/${p.creatorId}`} className="hover:text-neon-blue transition-colors">
+                                            {p.creatorName}
+                                        </Link>
+                                        {" "}• {p.answerType} •{" "}
                                         {p.solved ? `解決済み (${p.solvedBy})` : "未解決"}
                                     </p>
                                 </div>
@@ -310,9 +331,10 @@ export default function AdminPage() {
                                 className="cyber-card flex items-center justify-between p-4"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-text-primary truncate">
+                                    <Link href={`/user/${u.uid}`} className="font-bold text-text-primary truncate block hover:text-neon-blue transition-colors">
                                         {u.name}
-                                    </h3>
+                                        <FiExternalLink size={12} className="inline ml-1 opacity-50" />
+                                    </Link>
                                     <p className="text-xs text-text-muted mt-1">
                                         投稿: {u.puzzleCount} 件 • UID: {u.uid.slice(0, 12)}...
                                     </p>

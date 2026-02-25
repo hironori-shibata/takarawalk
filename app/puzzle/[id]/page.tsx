@@ -224,6 +224,20 @@ function PuzzleContent() {
         }
     }, [searchParams, puzzle, nameSubmitted, tokenProcessed, attemptSolve]);
 
+    // Auto-trigger X share when redirected from create page with ?share=x
+    useEffect(() => {
+        if (searchParams.get("share") === "x" && puzzle && !loading) {
+            const text = `🧩 TakaraWalkに新しい謎を投稿しました！「${puzzle.title}」\n先着1名のみがクリアできる！挑戦してね 👉`;
+            const url = `${window.location.origin}/puzzle/${puzzleId}`;
+            window.open(
+                `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                "_blank"
+            );
+            // Clean up URL
+            router.replace(`/puzzle/${puzzleId}`);
+        }
+    }, [searchParams, puzzle, loading, puzzleId, router]);
+
     function handleKeywordSubmit(e: React.FormEvent) {
         e.preventDefault();
         attemptSolve(answer);

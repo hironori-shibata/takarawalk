@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
-import { auth, isConfigured } from "@/lib/firebase";
+import { auth, db, isConfigured } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface AuthContextType {
     user: User | null;
@@ -23,9 +24,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
             return;
         }
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
             setLoading(false);
+            // Auto-create / update user document on login
+            if (user && db) {
+                try {
+                    await setDoc(
+                        doc(db, "users", user.uid),
+                        {
+                            displayName: user.displayName || "匿名",
+                            photoURL: user.photoURL || "",
+                            lastLoginAt: serverTimestamp(),
+                        },
+                        { merge: true }
+                    );
+                } catch (e) {
+                    console.error("Failed to upsert user doc:", e);
+                }
+            }
         });
         return () => unsubscribe();
     }, []);

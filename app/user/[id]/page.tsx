@@ -213,11 +213,9 @@ export default function UserProfilePage() {
                     <span>
                         作成: <span className="text-neon-blue font-bold">{createdPuzzles.length}</span> 件
                     </span>
-                    {isOwnProfile && (
-                        <span>
-                            解決: <span className="text-neon-pink font-bold">{solvedPuzzles.length}</span> 件
-                        </span>
-                    )}
+                    <span>
+                        解決: <span className="text-neon-pink font-bold">{solvedPuzzles.length}</span> 件
+                    </span>
                 </div>
             </div>
 
@@ -326,31 +324,29 @@ export default function UserProfilePage() {
                 )}
             </section>
 
-            {/* Solved Puzzles (own profile only) */}
-            {isOwnProfile && (
-                <section>
-                    <h2 className="font-[family-name:var(--font-orbitron)] text-xl font-bold neon-text-pink mb-6 flex items-center gap-2">
-                        <FiCheck size={20} />解いた謎
-                    </h2>
-                    {solvedPuzzles.length === 0 ? (
-                        <p className="text-text-muted text-center py-8">まだ謎を解いていません</p>
-                    ) : (
-                        <div className="space-y-3">
-                            {solvedPuzzles.map((p) => (
-                                <PuzzleCard
-                                    key={p.id}
-                                    puzzle={p}
-                                    showDelete={false}
-                                    deleteConfirm={null}
-                                    onDeleteRequest={() => { }}
-                                    onDeleteConfirm={async () => { }}
-                                    onDeleteCancel={() => { }}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </section>
-            )}
+            {/* Solved Puzzles */}
+            <section>
+                <h2 className="font-[family-name:var(--font-orbitron)] text-xl font-bold neon-text-pink mb-6 flex items-center gap-2">
+                    <FiCheck size={20} />解いた謎
+                </h2>
+                {solvedPuzzles.length === 0 ? (
+                    <p className="text-text-muted text-center py-8">まだ謎を解いていません</p>
+                ) : (
+                    <div className="space-y-3">
+                        {solvedPuzzles.map((p) => (
+                            <PuzzleCard
+                                key={p.id}
+                                puzzle={p}
+                                showDelete={false}
+                                deleteConfirm={null}
+                                onDeleteRequest={() => { }}
+                                onDeleteConfirm={async () => { }}
+                                onDeleteCancel={() => { }}
+                            />
+                        ))}
+                    </div>
+                )}
+            </section>
         </div>
     );
 }
