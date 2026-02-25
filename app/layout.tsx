@@ -3,6 +3,7 @@ import { Orbitron, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const orbitron = Orbitron({
     subsets: ["latin"],
@@ -29,14 +30,15 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="ja" className={`${orbitron.variable} ${notoSansJP.variable}`}>
-            <body className="font-[family-name:var(--font-noto)]">
+            <body className="font-[family-name:var(--font-noto)] flex flex-col min-h-screen">
                 <AuthProvider>
                     <div className="grid-overlay" />
                     <div className="scanline" />
                     <Navbar />
-                    <main className="relative z-10 min-h-screen pt-16">
+                    <main className="relative z-10 flex-1 min-h-screen pt-16">
                         {children}
                     </main>
+                    <Footer />
                 </AuthProvider>
             </body>
         </html>

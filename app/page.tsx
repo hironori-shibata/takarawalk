@@ -294,14 +294,14 @@ function PuzzleCard({ puzzle }: { puzzle: RecentPuzzle }) {
     }
 
     return (
-        <div className="cyber-card flex items-center justify-between p-4 group">
+        <Link
+            href={`/puzzle/${puzzle.id}`}
+            className="cyber-card flex items-center justify-between p-4 group block hover:border-neon-blue transition-colors"
+        >
             <div className="flex-1 min-w-0">
-                <Link
-                    href={`/puzzle/${puzzle.id}`}
-                    className="font-bold text-text-primary truncate block hover:text-neon-blue transition-colors"
-                >
+                <p className="font-bold text-text-primary truncate group-hover:text-neon-blue transition-colors">
                     {puzzle.title}
-                </Link>
+                </p>
                 <div className="flex items-center gap-3 mt-1 flex-wrap">
                     <span className="text-xs text-text-muted">
                         by{" "}
@@ -343,7 +343,7 @@ function PuzzleCard({ puzzle }: { puzzle: RecentPuzzle }) {
                     </span>
                 )}
             </div>
-        </div>
+        </Link>
     );
 }
 

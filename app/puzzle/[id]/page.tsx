@@ -481,6 +481,19 @@ function PuzzleContent() {
                 )}
             </div>
 
+            {/* X Share Button — top, unsolved only */}
+            {!puzzle.solved && (
+                <div className="mb-6 flex justify-center">
+                    <button
+                        onClick={() => shareOnX(`🧩 TakaraWalkの謎「${puzzle.title}」に挑戦中！\nまだ誰も解いてない…！ 👉`)}
+                        className="cyber-btn cyber-btn-pink flex items-center gap-3 px-8 py-3 text-base"
+                    >
+                        <FaXTwitter size={20} />
+                        Xでシェアしよう！
+                    </button>
+                </div>
+            )}
+
             {/* Puzzle Image */}
             <div className="mb-8">
                 <img src={puzzle.imageUrl} alt={puzzle.title} className="w-full max-h-[500px] object-contain neon-border rounded-sm" />
@@ -621,12 +634,14 @@ function PuzzleContent() {
                 <span className="text-sm text-text-muted">
                     プレイヤー: <span className="text-neon-blue">{playerName}</span>
                 </span>
-                <button
-                    onClick={() => shareOnX(`🧩 TakaraWalkの謎「${puzzle.title}」に挑戦中！\nまだ誰も解いてない…！ 👉`)}
-                    className="text-xs text-text-muted hover:text-neon-pink transition-colors flex items-center gap-1"
-                >
-                    <FaXTwitter size={14} />Xでシェア
-                </button>
+                {!puzzle.solved && (
+                    <button
+                        onClick={() => shareOnX(`🧩 TakaraWalkの謎「${puzzle.title}」に挑戦中！\nまだ誰も解いてない…！ 👉`)}
+                        className="cyber-btn cyber-btn-pink flex items-center gap-2 px-4 py-2"
+                    >
+                        <FaXTwitter size={16} />Xでシェア
+                    </button>
+                )}
             </div>
         </div>
     );
