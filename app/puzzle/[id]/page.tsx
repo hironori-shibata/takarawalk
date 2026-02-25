@@ -4,14 +4,16 @@ import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import {
     doc,
     runTransaction,
     serverTimestamp,
     onSnapshot,
     updateDoc,
+    deleteDoc,
 } from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
 import { toDate, formatDateTime, formatElapsed } from "@/lib/timeUtils";
 import { downloadQrImage } from "@/lib/qrImageUtils";
 import QrScanner from "@/components/QrScanner";
@@ -26,6 +28,7 @@ import {
     FiEdit3,
     FiSave,
     FiDownload,
+    FiTrash2,
 } from "react-icons/fi";
 import { FaXTwitter } from "react-icons/fa6";
 
@@ -95,6 +98,13 @@ function PuzzleContent() {
     // QR re-issue panel
     const [showQrPanel, setShowQrPanel] = useState(false);
     const [downloadingQr, setDownloadingQr] = useState(false);
+
+    // Keyword answer reveal (creator only)
+    const [showAnswers, setShowAnswers] = useState(false);
+
+    // Delete (creator only)
+    const [deleteConfirm, setDeleteConfirm] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     // Auto-fill name if logged in
     useEffect(() => {
@@ -304,6 +314,21 @@ function PuzzleContent() {
         }
     }
 
+    async function handleDeletePuzzle() {
+        if (!db || !puzzle) return;
+        setDeleting(true);
+        try {
+            await deleteDoc(doc(db, "puzzles", puzzleId));
+            if (storage && puzzle.imageUrl) {
+                try { await deleteObject(ref(storage, puzzle.imageUrl)); } catch { /* ignore */ }
+            }
+            router.push("/");
+        } catch {
+            alert("削除に失敗しました");
+            setDeleting(false);
+        }
+    }
+
     const isCreator = user?.uid === puzzle?.creatorId;
 
     // ---------- Loading ----------
@@ -447,9 +472,36 @@ function PuzzleContent() {
                                 {puzzle.title}
                             </h1>
                             {isCreator && !puzzle.solved && (
-                                <button onClick={startEditing} className="mt-0.5 p-1.5 text-text-muted hover:text-neon-blue transition-colors">
+                                <button onClick={startEditing} className="mt-0.5 p-1.5 text-text-muted hover:text-neon-blue transition-colors" title="編集">
                                     <FiEdit3 size={16} />
                                 </button>
+                            )}
+                            {isCreator && (
+                                deleteConfirm ? (
+                                    <div className="mt-0.5 flex items-center gap-1">
+                                        <button
+                                            onClick={handleDeletePuzzle}
+                                            disabled={deleting}
+                                            className="text-xs px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-sm hover:bg-red-500/40 transition-colors"
+                                        >
+                                            {deleting ? "削除中..." : "削除"}
+                                        </button>
+                                        <button
+                                            onClick={() => setDeleteConfirm(false)}
+                                            className="text-xs px-2 py-1 text-text-muted hover:text-text-primary transition-colors"
+                                        >
+                                            戻る
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setDeleteConfirm(true)}
+                                        className="mt-0.5 p-1.5 text-text-muted hover:text-neon-pink transition-colors"
+                                        title="削除"
+                                    >
+                                        <FiTrash2 size={16} />
+                                    </button>
+                                )
                             )}
                         </div>
                         <p className="text-sm text-text-muted mb-2">
@@ -470,8 +522,8 @@ function PuzzleContent() {
                     {createdDate && <p className="text-xs text-text-muted">📅 {formatDateTime(createdDate)}</p>}
                 </div>
                 {elapsedText && !puzzle.solved && (
-                    <p className="text-xs text-neon-yellow mt-2 flex items-center justify-center gap-1 animate-pulse-neon">
-                        <FiClock size={12} />投稿から {elapsedText} 経過
+                    <p className="text-sm font-bold text-neon-yellow mt-3 flex items-center justify-center gap-1.5 animate-pulse-neon">
+                        <FiClock size={16} />投稿から {elapsedText} 経過
                     </p>
                 )}
                 {puzzle.description && (
@@ -580,6 +632,35 @@ function PuzzleContent() {
                     </div>
                 )}
             </div>
+
+            {/* Keyword answer reveal — creator only, keyword type */}
+            {isCreator && !isQrType && (
+                <div className="mt-6 cyber-card p-5">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-bold text-text-secondary uppercase tracking-wider">
+                            回答確認（作成者専用）
+                        </span>
+                        <button
+                            onClick={() => setShowAnswers((v) => !v)}
+                            className="text-xs text-text-muted hover:text-neon-blue transition-colors"
+                        >
+                            {showAnswers ? "非表示" : "表示"}
+                        </button>
+                    </div>
+                    {showAnswers && (
+                        <div className="space-y-1">
+                            {(puzzle.answers && puzzle.answers.length > 0
+                                ? puzzle.answers
+                                : puzzle.answer ? [puzzle.answer] : []
+                            ).map((a, i) => (
+                                <p key={i} className="text-neon-green font-bold text-lg tracking-wider">
+                                    {a}
+                                </p>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* QR Re-issue panel — creator only, qrcode type */}
             {isCreator && isQrType && (
