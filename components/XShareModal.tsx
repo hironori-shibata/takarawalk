@@ -44,7 +44,9 @@ export default function XShareModal({
     // --- Helpers ---
 
     async function fetchImageBlob(url: string) {
-        const response = await fetch(url);
+        // Use proxy to bypass CORS when fetching from Firebase Storage
+        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+        const response = await fetch(proxyUrl);
         if (!response.ok) throw new Error("Network response was not ok");
         return await response.blob();
     }
@@ -148,7 +150,7 @@ export default function XShareModal({
     function handleOpenX() {
         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
         window.open(url, "_blank");
-        setStep(2);
+        // Don't auto-advance in case they close it, wait for user to click next
     }
 
     function handleCopyUrl() {
@@ -182,7 +184,7 @@ export default function XShareModal({
 
                         {/* Image Preview */}
                         <div className="mb-4 relative rounded overflow-hidden border border-cyber-border bg-cyber-bg p-2 flex justify-center">
-                            <img src={imageUrl} alt="Puzzle" className="max-h-32 object-contain" crossOrigin="anonymous" />
+                            <img src={imageUrl} alt="Puzzle" className="max-h-32 object-contain" />
                         </div>
 
                         {/* Share Actions */}
