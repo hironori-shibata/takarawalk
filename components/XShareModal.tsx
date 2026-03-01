@@ -24,6 +24,8 @@ export default function XShareModal({
     const [urlCopied, setUrlCopied] = useState(false);
     const [canUseWebShare, setCanUseWebShare] = useState(false);
     const [downloading, setDownloading] = useState(false);
+    const [watermarkedBlob, setWatermarkedBlob] = useState<Blob | null>(null);
+    const [watermarkedUrl, setWatermarkedUrl] = useState<string | null>(null);
 
     useEffect(() => {
         // Check if Web Share API with files is supported AND if it's a mobile device.
@@ -38,54 +40,31 @@ export default function XShareModal({
             setImageCopied(false);
             setUrlCopied(false);
             setDownloading(false);
+            setWatermarkedBlob(null);
+            setWatermarkedUrl(null);
+
+            let isMounted = true;
+            generateWatermarkedImage(imageUrl)
+                .then(blob => {
+                    if (isMounted) {
+                        setWatermarkedBlob(blob);
+                        setWatermarkedUrl(URL.createObjectURL(blob));
+                    }
+                })
+                .catch(console.error);
+
+            return () => { isMounted = false; };
         }
-    }, [isOpen]);
+    }, [isOpen, imageUrl]);
 
     if (!isOpen) return null;
-
-    // --- Helpers ---
-
-    async function fetchImageBlob(url: string) {
-        // Use proxy to bypass CORS when fetching from Firebase Storage
-        const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("Network response was not ok");
-        return await response.blob();
-    }
-
-    async function convertToPngBlob(blob: Blob): Promise<Blob> {
-        // If it's already png, just return it
-        if (blob.type === "image/png") return blob;
-
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext("2d");
-                if (!ctx) {
-                    reject(new Error("Canvas context is null"));
-                    return;
-                }
-                ctx.drawImage(img, 0, 0);
-                canvas.toBlob((b) => {
-                    if (b) resolve(b);
-                    else reject(new Error("Canvas toBlob failed"));
-                }, "image/png");
-            };
-            img.onerror = () => reject(new Error("Failed to load image for conversion"));
-            img.src = URL.createObjectURL(blob);
-        });
-    }
 
     // --- Actions ---
 
     async function handleWebShare() {
+        if (!watermarkedBlob) return;
         try {
-            const blob = await fetchImageBlob(imageUrl);
-            const file = new File([blob], "takarawalk.png", { type: blob.type });
+            const file = new File([watermarkedBlob], "takarawalk.png", { type: "image/png" });
 
             if (navigator.canShare?.({ files: [file] })) {
                 await navigator.share({
@@ -107,14 +86,12 @@ export default function XShareModal({
     }
 
     async function handleCopyAndOpenX() {
+        if (!watermarkedBlob) return;
         setDownloading(true);
         let success = false;
         try {
-            const blob = await fetchImageBlob(imageUrl);
-            const pngBlob = await convertToPngBlob(blob);
-
             await navigator.clipboard.write([
-                new ClipboardItem({ "image/png": pngBlob }),
+                new ClipboardItem({ "image/png": watermarkedBlob }),
             ]);
             setImageCopied(true);
             success = true;
@@ -131,10 +108,10 @@ export default function XShareModal({
     }
 
     async function handleDownloadImage() {
+        if (!watermarkedBlob) return;
         setDownloading(true);
         try {
-            const blob = await fetchImageBlob(imageUrl);
-            const blobUrl = URL.createObjectURL(blob);
+            const blobUrl = URL.createObjectURL(watermarkedBlob);
             const a = document.createElement("a");
             a.href = blobUrl;
             a.download = "takarawalk-puzzle.png";
@@ -184,7 +161,13 @@ export default function XShareModal({
 
                         {/* Image Preview */}
                         <div className="mb-4 relative rounded overflow-hidden border border-cyber-border bg-cyber-bg p-2 flex justify-center">
-                            <img src={imageUrl} alt="Puzzle" className="max-h-32 object-contain" />
+                            {watermarkedUrl ? (
+                                <img src={watermarkedUrl} alt="Puzzle with Watermark" className="max-h-32 object-contain" />
+                            ) : (
+                                <div className="h-32 flex items-center justify-center text-text-muted text-sm">
+                                    画像を準備中...
+                                </div>
+                            )}
                         </div>
 
                         {/* Share Actions */}
@@ -192,6 +175,7 @@ export default function XShareModal({
                             {canUseWebShare ? (
                                 <button
                                     onClick={handleWebShare}
+                                    disabled={!watermarkedBlob}
                                     className="cyber-btn w-full flex items-center justify-center gap-2"
                                 >
                                     <FiShare2 size={18} />
@@ -201,7 +185,7 @@ export default function XShareModal({
                                 <div className="space-y-3">
                                     <button
                                         onClick={handleCopyAndOpenX}
-                                        disabled={downloading}
+                                        disabled={downloading || !watermarkedBlob}
                                         className="cyber-btn cyber-btn-pink w-full flex items-center justify-center gap-2"
                                     >
                                         {imageCopied ? <FiCheck size={18} className="text-neon-green" /> : <FaXTwitter size={18} />}
@@ -274,4 +258,87 @@ export default function XShareModal({
             </div>
         </div>
     );
+}
+
+// Custom text watermark synthesis to replace local image file requirement
+async function generateWatermarkedImage(url: string): Promise<Blob> {
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+    const response = await fetch(proxyUrl);
+    if (!response.ok) throw new Error("Network response was not ok");
+    const blob = await response.blob();
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+            // Calculate responsive font size and positions
+            const targetWidth = img.width * 0.4;
+            const fontSize = Math.max(20, Math.floor(targetWidth / 7));
+
+            // Add margin for the watermark
+            const paddingSide = Math.max(16, img.width * 0.03);
+            const paddingBottom = fontSize + paddingSide * 2;
+
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height + paddingBottom;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                reject(new Error("Canvas context is null"));
+                return;
+            }
+
+            // Draw background for the new margin area (black)
+            ctx.fillStyle = "#0a0a0f"; // taking --color-cyber-bg
+            ctx.fillRect(0, img.height, canvas.width, paddingBottom);
+
+            // Draw original image
+            ctx.drawImage(img, 0, 0);
+
+            // Extract font family safely
+            const tempEl = document.createElement("span");
+            tempEl.style.fontFamily = "var(--font-orbitron)";
+            document.body.appendChild(tempEl);
+            const fontFamily = getComputedStyle(tempEl).fontFamily || '"Orbitron", sans-serif';
+            document.body.removeChild(tempEl);
+
+            ctx.font = `900 ${fontSize}px ${fontFamily}`;
+            ctx.textBaseline = "middle";
+
+            const startX = paddingSide;
+            // Center text inside the new bottom margin
+            const startY = img.height + (paddingBottom / 2);
+
+            const takaraText = "TAKARA";
+            const walkText = "WALK";
+
+            // Draw TAKARA (Neon Cyan)
+            ctx.fillStyle = "#00f0ff";
+            ctx.shadowColor = "rgba(0, 240, 255, 0.8)";
+            ctx.shadowBlur = fontSize * 0.2;
+            ctx.fillText(takaraText, startX, startY);
+            // Double draw for stronger glow
+            ctx.shadowBlur = fontSize * 0.4;
+            ctx.fillText(takaraText, startX, startY);
+
+            const takaraWidth = ctx.measureText(takaraText).width;
+
+            // Draw WALK (Neon Pink)
+            ctx.fillStyle = "#ff00e5";
+            ctx.shadowColor = "rgba(255, 0, 229, 0.8)";
+            ctx.shadowBlur = fontSize * 0.2;
+            ctx.fillText(walkText, startX + takaraWidth, startY);
+            // Double draw for stronger glow
+            ctx.shadowBlur = fontSize * 0.4;
+            ctx.fillText(walkText, startX + takaraWidth, startY);
+
+            // Always output PNG to support transparent and clipboard api
+            canvas.toBlob((b) => {
+                if (b) resolve(b);
+                else reject(new Error("Canvas toBlob failed"));
+            }, "image/png");
+        };
+        img.onerror = () => reject(new Error("Failed to load image for watermark"));
+        img.src = URL.createObjectURL(blob);
+    });
 }
