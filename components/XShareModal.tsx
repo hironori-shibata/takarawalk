@@ -177,8 +177,9 @@ export default function XShareModal({
                                 <FaXTwitter /> SHARE ON X
                             </h2>
                             <p className="text-sm text-text-secondary mt-2">
-                                リンク付き投稿はXで表示されにくいため、<br />
-                                <strong className="text-neon-pink">画像とテキストのみ</strong>で投稿しましょう！
+                                リンク付き投稿は<strong className="text-neon-pink">Xで表示されにくい</strong>ため、<br />
+                                まずは<strong className="text-neon-pink">画像とテキストのみ</strong>で投稿しましょう！<br />
+                                その後、リンクを<strong className="text-neon-pink">リプライで投稿</strong>しましょう！
                             </p>
                         </div>
 
@@ -229,7 +230,7 @@ export default function XShareModal({
                                 onClick={() => setStep(2)}
                                 className="text-xs text-text-muted hover:text-text-primary flex items-center gap-1 transition-colors"
                             >
-                                投稿できた？次へ <FiArrowRight size={14} />
+                                <strong className="text-neon-blue">投稿できた？次へ(リンクを共有！) </strong><FiArrowRight size={18} />
                             </button>
                         </div>
                     </div>
