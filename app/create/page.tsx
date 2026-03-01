@@ -10,8 +10,8 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { QRCodeSVG } from "qrcode.react";
 import { resizeImageToTarget } from "@/lib/imageUtils";
 import { downloadQrImage } from "@/lib/qrImageUtils";
-import { FiUpload, FiCheck, FiCopy, FiImage, FiPlus, FiX, FiDownload } from "react-icons/fi";
-import { FaXTwitter } from "react-icons/fa6";
+import { FiUpload, FiCheck, FiCopy, FiImage, FiPlus, FiX, FiDownload, FiShare2 } from "react-icons/fi";
+import { SHARE_TEMPLATES } from "@/lib/shareTemplates";
 import XShareModal from "@/components/XShareModal";
 
 function generateToken(): string {
@@ -244,8 +244,8 @@ export default function CreatePage() {
                             onClick={() => setShowShareModal(true)}
                             className="cyber-btn cyber-btn-pink flex items-center gap-2"
                         >
-                            <FaXTwitter size={16} />
-                            Xでシェアする
+                            <FiShare2 size={16} />
+                            SNSでシェアする
                         </button>
                         {answerType === "qrcode" && (
                             <button
@@ -285,7 +285,7 @@ export default function CreatePage() {
                     <XShareModal
                         isOpen={showShareModal}
                         onClose={() => setShowShareModal(false)}
-                        shareText={`🧩 TakaraWalkに新しい謎を投稿しました！「${title}」\n先着1名のみがクリアできる！挑戦してね 👉\n\n#TakaraWalk`}
+                        shareText={SHARE_TEMPLATES.CREATED_MANUAL_SHARE(title)}
                         puzzleUrl={createdUrl || ""}
                         imageUrl={imagePreview || ""}
                     />

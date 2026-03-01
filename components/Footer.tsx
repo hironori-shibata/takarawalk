@@ -20,6 +20,9 @@ export default function Footer() {
                     >
                         プライバシーポリシー
                     </Link>
+                    <Link href="https://x.com/TakaraWalk" className="text-xs text-text-muted hover:text-neon-blue transition-colors">
+                        公式X
+                    </Link>
                 </nav>
             </div>
         </footer>

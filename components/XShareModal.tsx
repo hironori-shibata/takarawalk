@@ -26,8 +26,10 @@ export default function XShareModal({
     const [downloading, setDownloading] = useState(false);
 
     useEffect(() => {
-        // Check if Web Share API with files is supported
-        if (typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof navigator.canShare === "function") {
+        // Check if Web Share API with files is supported AND if it's a mobile device.
+        // On desktop, the native share menu often lacks X/Instagram, so we prefer our custom flow.
+        const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile && typeof navigator.share === "function" && typeof navigator.canShare === "function") {
             setCanUseWebShare(true);
         }
 
@@ -104,8 +106,9 @@ export default function XShareModal({
         }
     }
 
-    async function handleCopyImage() {
+    async function handleCopyAndOpenX() {
         setDownloading(true);
+        let success = false;
         try {
             const blob = await fetchImageBlob(imageUrl);
             const pngBlob = await convertToPngBlob(blob);
@@ -114,14 +117,16 @@ export default function XShareModal({
                 new ClipboardItem({ "image/png": pngBlob }),
             ]);
             setImageCopied(true);
+            success = true;
             setTimeout(() => setImageCopied(false), 3000);
         } catch (error) {
-            console.error("Clipboard copy error:", error);
-            // Fallback to direct download
-            handleDownloadImage();
-            alert("画像のコピーに失敗したため、画像をダウンロードしました。");
         } finally {
             setDownloading(false);
+        }
+
+        if (success) {
+            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+            window.open(url, "_blank");
         }
     }
 
@@ -147,12 +152,6 @@ export default function XShareModal({
         }
     }
 
-    function handleOpenX() {
-        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-        window.open(url, "_blank");
-        // Don't auto-advance in case they close it, wait for user to click next
-    }
-
     function handleCopyUrl() {
         navigator.clipboard.writeText(puzzleUrl);
         setUrlCopied(true);
@@ -174,12 +173,12 @@ export default function XShareModal({
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <div className="text-center mb-6">
                             <h2 className="font-[family-name:var(--font-orbitron)] text-xl font-bold neon-text-blue flex items-center justify-center gap-2">
-                                <FaXTwitter /> SHARE ON X
+                                <FiShare2 /> SHARE ON SNS
                             </h2>
                             <p className="text-sm text-text-secondary mt-2">
-                                リンク付き投稿は<strong className="text-neon-pink">Xで表示されにくい</strong>ため、<br />
-                                まずは<strong className="text-neon-pink">画像とテキストのみ</strong>で投稿しましょう！<br />
-                                その後、リンクを<strong className="text-neon-pink">リプライで投稿</strong>しましょう！
+                                リンク付き投稿は<strong className="text-neon-pink">SNSで表示されにくい</strong>ため、<br />
+                                まずは<strong className="text-neon-blue">画像とテキストのみ</strong>で投稿しましょう！<br />
+                                共有後、<strong className="text-neon-pink">元の画面に戻って</strong>、リンクをコピーして<strong className="text-neon-pink">リプライなどで投稿</strong>しましょう！
                             </p>
                         </div>
 
@@ -201,37 +200,38 @@ export default function XShareModal({
                             ) : (
                                 <div className="space-y-3">
                                     <button
-                                        onClick={handleCopyImage}
+                                        onClick={handleCopyAndOpenX}
                                         disabled={downloading}
-                                        className="cyber-btn w-full flex items-center justify-center gap-2 bg-cyber-surface-light border-cyber-border text-text-primary hover:text-neon-blue"
-                                    >
-                                        {imageCopied ? <FiCheck size={18} className="text-neon-green" /> : <FiCopy size={18} />}
-                                        {downloading ? "準備中..." : imageCopied ? "コピー完了（または保存完了）" : "① 画像をクリップボードにコピー"}
-                                    </button>
-
-                                    <button
-                                        onClick={handleOpenX}
                                         className="cyber-btn cyber-btn-pink w-full flex items-center justify-center gap-2"
                                     >
-                                        <FaXTwitter size={18} />
-                                        ② Xを開く（テキストのみ）
+                                        {imageCopied ? <FiCheck size={18} className="text-neon-green" /> : <FaXTwitter size={18} />}
+                                        {downloading ? "準備中..." : imageCopied ? "コピー完了・Xを開きました" : "画像付きでXを開く"}
                                     </button>
                                     <p className="text-xs text-text-muted text-center">
-                                        Xが開いたら、先ほどコピーした画像を<br />
-                                        貼り付け（Ctrl+V / 長押し）してください。
+                                        <strong className="text-neon-blue">自動的に画像がコピー</strong>されXが開きます。<br />
+                                        Xが開いたら、<strong className="text-neon-pink">画像を貼り付け（Ctrl+V など）</strong>してください。
                                     </p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Skip to Step 2 if user already shared */}
-                        <div className="mt-6 flex justify-end">
+                        {/* Skip to Step 2 if user already shared or just copy URL directly */}
+                        <div className="mt-6 flex flex-col gap-3">
                             <button
-                                onClick={() => setStep(2)}
-                                className="text-xs text-text-muted hover:text-text-primary flex items-center gap-1 transition-colors"
+                                onClick={handleCopyUrl}
+                                className="cyber-btn bg-cyber-surface-light border-cyber-border text-text-primary hover:text-neon-blue w-full flex items-center justify-center gap-2"
                             >
-                                <strong className="text-neon-blue">投稿できた？次へ(リンクを共有！) </strong><FiArrowRight size={18} />
+                                {urlCopied ? <FiCheck size={18} className="text-neon-green" /> : <FiCopy size={18} />}
+                                {urlCopied ? "URLをコピーしました！" : "パズルのURLを直接コピー"}
                             </button>
+                            <div className="flex justify-end">
+                                <button
+                                    onClick={() => setStep(2)}
+                                    className="text-xs text-text-muted hover:text-text-primary flex items-center gap-1 transition-colors"
+                                >
+                                    <strong className="text-neon-blue">投稿できた？次へ(リンクの貼り方) </strong><FiArrowRight size={18} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ) : (

@@ -29,8 +29,9 @@ import {
     FiSave,
     FiDownload,
     FiTrash2,
+    FiShare2,
 } from "react-icons/fi";
-import { FaXTwitter } from "react-icons/fa6";
+import { SHARE_TEMPLATES } from "@/lib/shareTemplates";
 import XShareModal from "@/components/XShareModal";
 
 interface PuzzleData {
@@ -242,8 +243,7 @@ function PuzzleContent() {
     // Auto-trigger X share when redirected from create page with ?share=x
     useEffect(() => {
         if (searchParams.get("share") === "x" && puzzle && !loading) {
-            const text = `🧩 TakaraWalkに新しい謎を投稿しました！「${puzzle.title}」\n先着1名のみがクリアできる！挑戦してね 👉\n\n#TakaraWalk`;
-            setShareText(text);
+            setShareText(SHARE_TEMPLATES.CREATED_AUTO_SHARE(puzzle.title));
             setShowShareModal(true);
             // Clean up URL
             router.replace(`/puzzle/${puzzleId}`);
@@ -374,10 +374,10 @@ function PuzzleContent() {
                     </div>
                     <img src={puzzle.imageUrl} alt={puzzle.title} className="w-full max-h-[300px] object-contain rounded-sm opacity-50 mb-6" />
                     <button
-                        onClick={() => shareOnX(`🔒 TakaraWalkの謎「${puzzle.title}」は${puzzle.solvedBy}さんに解かれました！\n次の挑戦者は誰だ？ 👉`)}
+                        onClick={() => shareOnX(SHARE_TEMPLATES.ALREADY_SOLVED(puzzle.title, puzzle.solvedBy as string))}
                         className="cyber-btn cyber-btn-pink flex items-center gap-2 mx-auto text-sm px-4 py-2"
                     >
-                        <FaXTwitter size={16} />Xでシェアする
+                        <FiShare2 size={16} />SNSでシェアする
                     </button>
                 </div>
             </div>
@@ -398,10 +398,10 @@ function PuzzleContent() {
                         <p className="text-2xl font-bold neon-text-blue">{result.solvedBy}</p>
                     </div>
                     <button
-                        onClick={() => shareOnX(`🏆 TakaraWalkの謎「${puzzle.title}」を最初に解きました！\n挑戦してみてね 👉`)}
+                        onClick={() => shareOnX(SHARE_TEMPLATES.CONGRATULATIONS(puzzle.title, elapsedText))}
                         className="cyber-btn cyber-btn-pink flex items-center gap-2 mx-auto text-lg px-6 py-3"
                     >
-                        <FaXTwitter size={20} />Xでシェアする
+                        <FiShare2 size={20} />SNSでシェアする
                     </button>
                 </div>
             </div>
@@ -532,15 +532,15 @@ function PuzzleContent() {
                 )}
             </div>
 
-            {/* X Share Button — top, unsolved only */}
+            {/* SNS Share Button — top, unsolved only */}
             {!puzzle.solved && (
                 <div className="mb-6 flex justify-center">
                     <button
-                        onClick={() => shareOnX(`🧩 TakaraWalkの謎「${puzzle.title}」に挑戦中！\nまだ誰も解いてない…！ 👉`)}
+                        onClick={() => shareOnX(SHARE_TEMPLATES.CHALLENGING(puzzle.title, elapsedText))}
                         className="cyber-btn cyber-btn-pink flex items-center gap-3 px-8 py-3 text-base"
                     >
-                        <FaXTwitter size={20} />
-                        Xでシェアしよう！
+                        <FiShare2 size={20} />
+                        SNSでシェアしよう！
                     </button>
                 </div>
             )}
@@ -716,10 +716,10 @@ function PuzzleContent() {
                 </span>
                 {!puzzle.solved && (
                     <button
-                        onClick={() => shareOnX(`🧩 TakaraWalkの謎「${puzzle.title}」に挑戦中！\nまだ誰も解いてない…！ 👉`)}
+                        onClick={() => shareOnX(SHARE_TEMPLATES.CHALLENGING(puzzle.title, elapsedText))}
                         className="cyber-btn cyber-btn-pink flex items-center gap-2 px-4 py-2"
                     >
-                        <FaXTwitter size={16} />Xでシェア
+                        <FiShare2 size={16} />SNSでシェア
                     </button>
                 )}
             </div>
