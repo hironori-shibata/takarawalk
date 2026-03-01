@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ----------------------------------------------------------------
+    // puzzles/{filename} —— 謎の画像
+    // ----------------------------------------------------------------
+    match /puzzles/{filename} {
+
+      // 誰でも読み取り可（謎ページ・OGP画像）
+      allow read: if true;
+
+      // アップロード制限:
+      //   - ログインユーザーのみ
+      //   - ファイルサイズ 5MB 以内（圧縮後）
+      //   - 画像ファイルのみ（MIME タイプで制限）
+      allow create: if request.auth != null
+          && request.resource.size <= 5 * 1024 * 1024
+          && request.resource.contentType.matches('image/.*');
+
+      // 上書き禁止（更新は許可しない）
+      allow update: if false;
+
+      // 削除: ログインユーザーのみ
+      // （アプリ側のコードで作成者・管理者のみが削除操作を呼び出す）
+      allow delete: if request.auth != null;
+    }
+  }
+}

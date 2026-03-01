@@ -12,6 +12,7 @@ import { resizeImageToTarget } from "@/lib/imageUtils";
 import { downloadQrImage } from "@/lib/qrImageUtils";
 import { FiUpload, FiCheck, FiCopy, FiImage, FiPlus, FiX, FiDownload } from "react-icons/fi";
 import { FaXTwitter } from "react-icons/fa6";
+import XShareModal from "@/components/XShareModal";
 
 function generateToken(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -45,6 +46,7 @@ export default function CreatePage() {
     const [createdId, setCreatedId] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [downloadingQr, setDownloadingQr] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     if (loading) {
         return (
@@ -162,13 +164,6 @@ export default function CreatePage() {
         setTimeout(() => setCopied(false), 2000);
     }
 
-    function shareOnX() {
-        // Navigate to puzzle page so Twitter's OG crawler can resolve metadata
-        if (createdId) {
-            router.push(`/puzzle/${createdId}?share=x`);
-        }
-    }
-
     async function handleDownloadQr() {
         const qrUrl = `${window.location.origin}/puzzle/${createdId}?token=${qrToken}`;
         setDownloadingQr(true);
@@ -246,7 +241,7 @@ export default function CreatePage() {
 
                     <div className="flex gap-3 justify-center flex-wrap">
                         <button
-                            onClick={shareOnX}
+                            onClick={() => setShowShareModal(true)}
                             className="cyber-btn cyber-btn-pink flex items-center gap-2"
                         >
                             <FaXTwitter size={16} />
@@ -285,6 +280,16 @@ export default function CreatePage() {
                         </button>
                     </div>
                 </div>
+
+                {createdId && (
+                    <XShareModal
+                        isOpen={showShareModal}
+                        onClose={() => setShowShareModal(false)}
+                        shareText={`🧩 TakaraWalkに新しい謎を投稿しました！「${title}」\n先着1名のみがクリアできる！挑戦してね 👉\n\n#TakaraWalk`}
+                        puzzleUrl={createdUrl || ""}
+                        imageUrl={imagePreview || ""}
+                    />
+                )}
             </div>
         );
     }

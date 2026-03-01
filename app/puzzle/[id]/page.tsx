@@ -31,6 +31,7 @@ import {
     FiTrash2,
 } from "react-icons/fi";
 import { FaXTwitter } from "react-icons/fa6";
+import XShareModal from "@/components/XShareModal";
 
 interface PuzzleData {
     title: string;
@@ -105,6 +106,10 @@ function PuzzleContent() {
     // Delete (creator only)
     const [deleteConfirm, setDeleteConfirm] = useState(false);
     const [deleting, setDeleting] = useState(false);
+
+    // X Share Modal
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareText, setShareText] = useState("");
 
     // Auto-fill name if logged in
     useEffect(() => {
@@ -237,12 +242,9 @@ function PuzzleContent() {
     // Auto-trigger X share when redirected from create page with ?share=x
     useEffect(() => {
         if (searchParams.get("share") === "x" && puzzle && !loading) {
-            const text = `🧩 TakaraWalkに新しい謎を投稿しました！「${puzzle.title}」\n先着1名のみがクリアできる！挑戦してね 👉`;
-            const url = `${window.location.origin}/puzzle/${puzzleId}`;
-            window.open(
-                `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-                "_blank"
-            );
+            const text = `🧩 TakaraWalkに新しい謎を投稿しました！「${puzzle.title}」\n先着1名のみがクリアできる！挑戦してね 👉\n\n#TakaraWalk`;
+            setShareText(text);
+            setShowShareModal(true);
             // Clean up URL
             router.replace(`/puzzle/${puzzleId}`);
         }
@@ -271,11 +273,8 @@ function PuzzleContent() {
     }
 
     function shareOnX(text: string) {
-        const url = `${window.location.origin}/puzzle/${puzzleId}`;
-        window.open(
-            `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-            "_blank"
-        );
+        setShareText(text);
+        setShowShareModal(true);
     }
 
     function startEditing() {
@@ -724,6 +723,16 @@ function PuzzleContent() {
                     </button>
                 )}
             </div>
+
+            {puzzle && (
+                <XShareModal
+                    isOpen={showShareModal}
+                    onClose={() => setShowShareModal(false)}
+                    shareText={shareText}
+                    puzzleUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/puzzle/${puzzleId}`}
+                    imageUrl={puzzle.imageUrl}
+                />
+            )}
         </div>
     );
 }

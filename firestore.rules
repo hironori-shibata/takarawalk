@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------------------------------------------
+    // Helper functions
+    // ----------------------------------------------------------------
+
+    // 管理者判定
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.uid == "A1QGME5vqTVVJTNXLhqZSm0gCX43";
+    }
+
+    // 謎を解く操作 —— 未解決の謎を初めて解くときだけ許可
+    // solved: false → true への遷移のみ、かつ変更フィールドは4つに限定
+    function isSolveUpdate() {
+      let allowed = ['solved', 'solvedBy', 'solvedByUid', 'solvedAt'];
+      return resource.data.solved == false
+          && request.resource.data.solved == true
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
+    // 作成者による編集 —— タイトル・概要・場所のみ変更可能
+    function isCreatorEdit() {
+      let allowed = ['title', 'description', 'location'];
+      return request.auth != null
+          && request.auth.uid == resource.data.creatorId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed);
+    }
+
+    // ----------------------------------------------------------------
+    // puzzles コレクション
+    // ----------------------------------------------------------------
+    match /puzzles/{puzzleId} {
+
+      // 誰でも読み取り可（トップページ一覧・謎ページ・OGP生成）
+      allow read: if true;
+
+      // ログインユーザーのみ投稿可。creatorId は自分のUIDでなければならない
+      allow create: if request.auth != null
+          && request.resource.data.creatorId == request.auth.uid
+          && request.resource.data.keys().hasAll(['title', 'imageUrl', 'answer', 'answerType', 'creatorId', 'creatorName', 'solved', 'createdAt'])
+          && request.resource.data.solved == false;
+
+      // 更新は3パターンのみ許可
+      allow update: if isSolveUpdate()    // 誰でも（未解決→解決の1回のみ）
+                 || isCreatorEdit()       // 作成者によるメタ情報編集
+                 || isAdmin();           // 管理者は何でも可
+
+      // 削除: 作成者 or 管理者
+      allow delete: if request.auth != null
+          && (request.auth.uid == resource.data.creatorId || isAdmin());
+    }
+
+    // ----------------------------------------------------------------
+    // users コレクション
+    // ----------------------------------------------------------------
+    match /users/{userId} {
+
+      // 誰でも読み取り可（ユーザープロフィールページ）
+      allow read: if true;
+
+      // 自分自身のドキュメントのみ作成・更新可（ログイン時の自動 upsert / SNSリンク保存）
+      allow create, update: if request.auth != null
+          && request.auth.uid == userId;
+
+      // 削除: 管理者のみ
+      allow delete: if isAdmin();
+    }
+  }
+}
