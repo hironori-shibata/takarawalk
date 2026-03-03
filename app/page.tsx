@@ -148,8 +148,7 @@ export default function HomePage() {
                 <div className="animate-float mb-8">
                     <div className="relative">
                         <h1 className="font-[family-name:var(--font-orbitron)] text-5xl sm:text-7xl font-black tracking-wider">
-                            <span className="neon-text-blue">TAKARA</span>
-                            <span className="neon-text-pink">WALK</span>
+                            <span className="neon-text-blue">nazo</span> <span className="neon-text-pink">1</span>
                         </h1>
                         <div className="mt-2 h-[2px] bg-gradient-to-r from-transparent via-neon-blue to-transparent" />
                     </div>

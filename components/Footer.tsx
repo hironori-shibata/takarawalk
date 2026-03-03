@@ -5,7 +5,7 @@ export default function Footer() {
         <footer className="relative z-10 border-t border-cyber-border bg-cyber-surface/60 backdrop-blur-sm mt-auto">
             <div className="max-w-4xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <p className="text-xs text-text-muted font-[family-name:var(--font-orbitron)] tracking-wider">
-                    © 2026 <span className="neon-text-blue">TAKARA</span><span className="neon-text-pink">WALK</span>
+                    © 2026 <span className="neon-text-blue">nazo</span> <span className="neon-text-pink">1</span>
                 </p>
                 <nav className="flex items-center gap-6">
                     <Link
@@ -20,7 +20,7 @@ export default function Footer() {
                     >
                         プライバシーポリシー
                     </Link>
-                    <Link href="https://x.com/TakaraWalk" className="text-xs text-text-muted hover:text-neon-blue transition-colors">
+                    <Link href="https://x.com/nazo1_official" className="text-xs text-text-muted hover:text-neon-blue transition-colors">
                         公式X
                     </Link>
                 </nav>

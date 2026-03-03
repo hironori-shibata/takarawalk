@@ -1,6 +1,6 @@
 export const metadata = {
-    title: "プライバシーポリシー | TakaraWalk",
-    description: "TakaraWalkのプライバシーポリシー",
+    title: "プライバシーポリシー | nazo 1",
+    description: "nazo 1のプライバシーポリシー",
 };
 
 export default function PrivacyPage() {
@@ -13,7 +13,7 @@ export default function PrivacyPage() {
 
             <div className="cyber-card p-8 space-y-8 text-text-secondary leading-relaxed">
                 <p>
-                    「TakaraWalk」運営者（以下、「運営者」といいます）は、本サービスにおけるユーザーの個人情報の取扱いについて、以下のとおりプライバシーポリシー（以下、「本ポリシー」といいます）を定めます。
+                    「nazo 1」運営者（以下、「運営者」といいます）は、本サービスにおけるユーザーの個人情報の取扱いについて、以下のとおりプライバシーポリシー（以下、「本ポリシー」といいます）を定めます。
                 </p>
 
                 <section>
@@ -102,7 +102,7 @@ export default function PrivacyPage() {
                         本ポリシーに関するお問い合わせは、以下の窓口までお願いいたします。
                     </p>
                     <p className="text-sm mt-2">
-                        連絡先：<a href="https://x.com/TakaraWalk" target="_blank" rel="noopener noreferrer" className="text-neon-blue hover:underline">@TakaraWalk</a>
+                        連絡先：<a href="https://x.com/nazo1_official" target="_blank" rel="noopener noreferrer" className="text-neon-blue hover:underline">@nazo1_official</a>
                     </p>
                 </section>
             </div>

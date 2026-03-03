@@ -59,7 +59,7 @@ export async function downloadQrImage(
     ctx.shadowBlur = 14;
     ctx.font = "bold 28px Courier New, monospace";
     ctx.textAlign = "center";
-    ctx.fillText("TAKARAWALK", CANVAS_W / 2, 56);
+    ctx.fillText("nazo 1", CANVAS_W / 2, 56);
     ctx.shadowBlur = 0;
 
     // Congratulatory sub-line
@@ -111,11 +111,11 @@ export async function downloadQrImage(
     // Bottom URL hint
     ctx.fillStyle = "#555566";
     ctx.font = "11px Courier New, monospace";
-    ctx.fillText("takarawalk.vercel.app", CANVAS_W / 2, CANVAS_H - 30);
+    ctx.fillText("nazo1.vercel.app", CANVAS_W / 2, CANVAS_H - 30);
 
     // 3. Download
     const link = document.createElement("a");
-    link.download = `takarawalk-qr-${Date.now()}.png`;
+    link.download = `nazo1-qr-${Date.now()}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
 }

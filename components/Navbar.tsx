@@ -15,10 +15,10 @@ export default function Navbar() {
         <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 bg-cyber-surface/80 backdrop-blur-md border-b border-cyber-border">
             <Link href="/" className="flex items-center gap-2 group">
                 <span className="font-[family-name:var(--font-orbitron)] text-xl font-bold neon-text-blue tracking-wider group-hover:animate-glitch">
-                    TAKARA
+                    nazo
                 </span>
                 <span className="font-[family-name:var(--font-orbitron)] text-xl font-bold neon-text-pink tracking-wider">
-                    WALK
+                    1
                 </span>
             </Link>
 

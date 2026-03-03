@@ -1,6 +1,6 @@
 export const metadata = {
-    title: "利用規約 | TakaraWalk",
-    description: "TakaraWalkの利用規約",
+    title: "利用規約 | nazo 1",
+    description: "nazo 1の利用規約",
 };
 
 export default function TermsPage() {
@@ -13,7 +13,7 @@ export default function TermsPage() {
 
             <div className="cyber-card p-8 space-y-8 text-text-secondary leading-relaxed">
                 <p>
-                    この利用規約（以下、「本規約」といいます）は、「TakaraWalk」（以下、「本サービス」といいます）の利用条件を定めるものです。本サービスを利用するすべてのユーザー（問題作成者および回答者を含み、以下、「ユーザー」といいます）には、本規約に従って本サービスをご利用いただきます。
+                    この利用規約（以下、「本規約」といいます）は、「nazo 1」（以下、「本サービス」といいます）の利用条件を定めるものです。本サービスを利用するすべてのユーザー（問題作成者および回答者を含み、以下、「ユーザー」といいます）には、本規約に従って本サービスをご利用いただきます。
                 </p>
 
                 <section>

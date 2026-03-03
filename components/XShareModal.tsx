@@ -64,7 +64,7 @@ export default function XShareModal({
     async function handleWebShare() {
         if (!watermarkedBlob) return;
         try {
-            const file = new File([watermarkedBlob], "takarawalk.png", { type: "image/png" });
+            const file = new File([watermarkedBlob], "nazo1.png", { type: "image/png" });
 
             if (navigator.canShare?.({ files: [file] })) {
                 await navigator.share({
@@ -114,7 +114,7 @@ export default function XShareModal({
             const blobUrl = URL.createObjectURL(watermarkedBlob);
             const a = document.createElement("a");
             a.href = blobUrl;
-            a.download = "takarawalk-puzzle.png";
+            a.download = "nazo1-puzzle.png";
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -309,8 +309,8 @@ async function generateWatermarkedImage(url: string): Promise<Blob> {
             // Center text inside the new bottom margin
             const startY = img.height + (paddingBottom / 2);
 
-            const takaraText = "TAKARA";
-            const walkText = "WALK";
+            const takaraText = "nazo ";
+            const walkText = "1";
 
             // Draw TAKARA (Neon Cyan)
             ctx.fillStyle = "#00f0ff";

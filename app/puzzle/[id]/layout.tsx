@@ -9,7 +9,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { id } = await params;
 
-    let title = "TakaraWalk - 謎解き";
+    let title = "nazo 1 - 謎解き";
     let description = "先着1名のみがクリアできる謎解き共有バトル";
     let imageUrl: string | undefined;
 
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             const puzzleSnap = await getDoc(doc(db, "puzzles", id));
             if (puzzleSnap.exists()) {
                 const data = puzzleSnap.data();
-                title = `${data.title} | TakaraWalk`;
+                title = `${data.title} | nazo 1`;
                 description = data.description || `${data.creatorName}が投稿した謎解きに挑戦！先着1名のみがクリアできる。`;
                 imageUrl = data.imageUrl;
             }
