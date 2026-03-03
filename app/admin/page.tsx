@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { signInWithGoogle } from "@/lib/auth";
 import { db, storage } from "@/lib/firebase";
 import {
     collection,
@@ -35,7 +34,7 @@ interface UserSummary {
 }
 
 export default function AdminPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, openLoginModal } = useAuth();
     const adminUid = process.env.NEXT_PUBLIC_ADMIN_UID;
     const isAdmin = user && adminUid && user.uid === adminUid;
 
@@ -199,8 +198,8 @@ export default function AdminPage() {
                     ACCESS DENIED
                 </h1>
                 <p className="text-text-secondary mb-8">ログインが必要です</p>
-                <button onClick={() => signInWithGoogle()} className="cyber-btn">
-                    Googleでログイン
+                <button onClick={openLoginModal} className="cyber-btn">
+                    ログインする
                 </button>
             </div>
         );

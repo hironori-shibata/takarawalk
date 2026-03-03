@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { signInWithGoogle } from "@/lib/auth";
 import { db, storage } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -28,7 +27,7 @@ const MAX_RAW_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB (raw, before compress
 const MAX_COMPRESSED_SIZE_BYTES = 500 * 1024;      // 500 kB (after compression, fallback limit)
 
 export default function CreatePage() {
-    const { user, loading } = useAuth();
+    const { user, loading, openLoginModal } = useAuth();
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,8 +66,8 @@ export default function CreatePage() {
                 <p className="text-text-secondary mb-8">
                     謎を作成するにはログインが必要です
                 </p>
-                <button onClick={() => signInWithGoogle()} className="cyber-btn">
-                    Googleでログイン
+                <button onClick={openLoginModal} className="cyber-btn">
+                    ログインして作成
                 </button>
             </div>
         );

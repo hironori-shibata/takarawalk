@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { signInWithGoogle, signOut } from "@/lib/auth";
+import { signOut } from "@/lib/auth";
 import { FiLogIn, FiLogOut, FiPlus, FiShield } from "react-icons/fi";
 
 export default function Navbar() {
-    const { user, loading } = useAuth();
+    const { user, loading, openLoginModal } = useAuth();
 
     const adminUid = process.env.NEXT_PUBLIC_ADMIN_UID;
     const isAdmin = user && adminUid && user.uid === adminUid;
@@ -70,7 +70,7 @@ export default function Navbar() {
                             </>
                         ) : (
                             <button
-                                onClick={() => signInWithGoogle()}
+                                onClick={openLoginModal}
                                 className="cyber-btn flex items-center gap-2 text-sm"
                             >
                                 <FiLogIn size={16} />

@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import LoginModalWrapper from "@/components/LoginModalWrapper";
 
 const orbitron = Orbitron({
     subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
                         {children}
                     </main>
                     <Footer />
+                    <LoginModalWrapper />
                 </AuthProvider>
             </body>
         </html>

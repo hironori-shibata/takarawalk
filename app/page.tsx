@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { signInWithGoogle } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 import {
     collection,
@@ -35,7 +34,7 @@ interface RecentPuzzle {
 const PAGE_SIZE = 5;
 
 export default function HomePage() {
-    const { user } = useAuth();
+    const { user, openLoginModal } = useAuth();
     const [puzzles, setPuzzles] = useState<RecentPuzzle[]>([]);
     const [hasMore, setHasMore] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -171,7 +170,7 @@ export default function HomePage() {
                         </Link>
                     ) : (
                         <button
-                            onClick={() => signInWithGoogle()}
+                            onClick={openLoginModal}
                             className="cyber-btn text-lg px-8 py-4 flex items-center gap-2"
                         >
                             <FiZap size={20} />

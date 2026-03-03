@@ -3,6 +3,10 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     signOut as firebaseSignOut,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    sendPasswordResetEmail,
+    updateProfile,
 } from "firebase/auth";
 
 const googleProvider = new GoogleAuthProvider();
@@ -29,4 +33,33 @@ export async function signOut() {
         console.error("Sign-out error:", error);
         throw error;
     }
+}
+
+export async function signInWithEmail(email: string, password: string) {
+    if (!auth) {
+        alert("Firebaseが設定されていません。");
+        return null;
+    }
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    return result.user;
+}
+
+export async function signUpWithEmail(email: string, password: string, displayName: string) {
+    if (!auth) {
+        alert("Firebaseが設定されていません。");
+        return null;
+    }
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    if (result.user && displayName) {
+        await updateProfile(result.user, { displayName });
+    }
+    return result.user;
+}
+
+export async function resetPassword(email: string) {
+    if (!auth) {
+        alert("Firebaseが設定されていません。");
+        return;
+    }
+    await sendPasswordResetEmail(auth, email);
 }
