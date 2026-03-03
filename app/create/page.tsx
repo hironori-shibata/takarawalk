@@ -24,8 +24,8 @@ function generateToken(): string {
 }
 
 const MAX_ANSWERS = 10;
-const MAX_RAW_FILE_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB (raw, before compression)
-const MAX_COMPRESSED_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB (after compression)
+const MAX_RAW_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB (raw, before compression)
+const MAX_COMPRESSED_SIZE_BYTES = 500 * 1024;      // 500 kB (after compression, fallback limit)
 
 export default function CreatePage() {
     const { user, loading } = useAuth();
@@ -80,7 +80,7 @@ export default function CreatePage() {
         setImageError(null);
 
         if (file.size > MAX_RAW_FILE_SIZE_BYTES) {
-            setImageError("画像は20MB以下にしてください。");
+            setImageError("画像は10MB以下にしてください。");
             e.target.value = "";
             return;
         }
@@ -118,7 +118,7 @@ export default function CreatePage() {
 
             // Check compressed size
             if (uploadFile.size > MAX_COMPRESSED_SIZE_BYTES) {
-                setImageError("圧縮後のサイズが5MBを超えています。より小さい画像をお試しください。");
+                setImageError("圧縮後のサイズが500kBを超えています。より小さい画像をお試しください。");
                 setSubmitting(false);
                 return;
             }
@@ -354,7 +354,7 @@ export default function CreatePage() {
                         <label className="block text-sm font-bold text-text-secondary uppercase tracking-wider">
                             謎の画像
                         </label>
-                        <span className="text-xs text-text-muted">圧縮後5MB以内</span>
+                        <span className="text-xs text-text-muted">圧縮後500kB以内</span>
                     </div>
                     <input
                         ref={fileInputRef}
@@ -393,9 +393,9 @@ export default function CreatePage() {
                             </span>
                         </button>
                     )}
-                    <p className="text-xs text-text-muted mt-1">
+                    {/* <p className="text-xs text-text-muted mt-1">
                         アップロード前に自動でリサイズ（約1MB以下）されます。
-                    </p>
+                    </p> */}
                 </div>
 
                 {/* Answer Type */}
@@ -478,10 +478,10 @@ export default function CreatePage() {
                 {answerType === "qrcode" && (
                     <div className="cyber-card text-center p-4">
                         <p className="text-sm text-text-secondary mb-2">
-                            作成後にURL付きQRコードが生成されます。印刷して謎の現場に設置してください。
+                            作成後にURL付きQRコードが生成されます。印刷して答えが示す現場に設置してください。
                         </p>
                         <p className="text-xs text-text-muted">
-                            QRコードをスキャンすると自動的にパズルページへ遷移し、回答が処理されます。
+                            QRコードがスキャンされると自動的にパズルページへ遷移し、クリアとなります。
                         </p>
                     </div>
                 )}

@@ -1,15 +1,37 @@
 /**
  * lib/imageUtils.ts
  * Client-side image resize using Canvas API.
- * Resizes to fit within maxDimension and iterates quality until targetBytes is met.
+ * Outputs WebP (with JPEG fallback) and iterates quality until targetBytes is met.
  */
 
-const MAX_DIMENSION = 2048;
-const MAX_QUALITY_STEPS = 4;
+const MAX_DIMENSION = 1200;
+const MAX_QUALITY_STEPS = 6;
+
+/**
+ * Try to create a blob in WebP format; fall back to JPEG if the browser
+ * does not support WebP encoding (extremely rare in modern browsers).
+ */
+async function canvasToBlob(
+    canvas: HTMLCanvasElement,
+    quality: number
+): Promise<{ blob: Blob | null; mime: string; ext: string }> {
+    // Try WebP first
+    const webpBlob = await new Promise<Blob | null>((res) =>
+        canvas.toBlob((b) => res(b), "image/webp", quality)
+    );
+    if (webpBlob && webpBlob.size > 0) {
+        return { blob: webpBlob, mime: "image/webp", ext: ".webp" };
+    }
+    // JPEG fallback
+    const jpegBlob = await new Promise<Blob | null>((res) =>
+        canvas.toBlob((b) => res(b), "image/jpeg", quality)
+    );
+    return { blob: jpegBlob, mime: "image/jpeg", ext: ".jpg" };
+}
 
 export async function resizeImageToTarget(
     file: File,
-    targetBytes = 1024 * 1024  // 1 MB default
+    targetBytes = 300 * 1024  // 300 kB default
 ): Promise<File> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -35,15 +57,18 @@ export async function resizeImageToTarget(
                 ctx.drawImage(img, 0, 0, width, height);
 
                 // Iterate quality until below targetBytes
-                let quality = 0.85;
+                let quality = 0.75;
                 let blob: Blob | null = null;
+                let mime = "image/webp";
+                let ext = ".webp";
 
                 for (let step = 0; step < MAX_QUALITY_STEPS; step++) {
-                    blob = await new Promise<Blob | null>((res) =>
-                        canvas.toBlob((b) => res(b), "image/jpeg", quality)
-                    );
+                    const result = await canvasToBlob(canvas, quality);
+                    blob = result.blob;
+                    mime = result.mime;
+                    ext = result.ext;
                     if (!blob || blob.size <= targetBytes) break;
-                    quality = Math.max(0.3, quality - 0.15);
+                    quality = Math.max(0.35, quality - 0.08);
                 }
 
                 if (!blob) {
@@ -54,8 +79,8 @@ export async function resizeImageToTarget(
 
                 const outputFile = new File(
                     [blob],
-                    file.name.replace(/\.[^.]+$/, ".jpg"),
-                    { type: "image/jpeg", lastModified: Date.now() }
+                    file.name.replace(/\.[^.]+$/, ext),
+                    { type: mime, lastModified: Date.now() }
                 );
                 resolve(outputFile);
             };

@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { toDate, formatDateTime, formatElapsed } from "@/lib/timeUtils";
 import { FiZap, FiLock, FiShare2, FiArrowRight, FiMapPin, FiClock, FiChevronDown } from "react-icons/fi";
+import TutorialSection from "@/components/TutorialSection";
 
 interface RecentPuzzle {
     id: string;
@@ -155,10 +156,10 @@ export default function HomePage() {
                 </div>
 
                 <p className="text-xl sm:text-2xl text-text-secondary mb-4 max-w-2xl">
-                    先着<span className="neon-text-blue font-bold text-3xl mx-1">1</span>名のみがクリアできる
+                    <span className="neon-text-pink font-bold text-3xl mx-1">1</span>枚ナゾ × 先着<span className="neon-text-pink font-bold text-3xl mx-1">1</span>名のみがクリアできる
                 </p>
                 <p className="text-lg text-text-muted mb-12 max-w-xl">
-                    謎解き共有バトルプラットフォーム
+                    謎解き共有バトルアプリ 「nazo1」（ナゾワン）で、リアルタイムに競い合おう。
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -174,7 +175,7 @@ export default function HomePage() {
                             className="cyber-btn text-lg px-8 py-4 flex items-center gap-2"
                         >
                             <FiZap size={20} />
-                            ログインして始める
+                            ログインして謎作成
                             <FiArrowRight size={18} />
                         </button>
                     )}
@@ -247,6 +248,9 @@ export default function HomePage() {
                     </div>
                 )}
             </section>
+
+            {/* Tutorial Section */}
+            <TutorialSection />
 
             {/* Features Section */}
             <section className="px-6 py-20 max-w-5xl mx-auto">
