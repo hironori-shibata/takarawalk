@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { signOut } from "@/lib/auth";
-import { FiLogIn, FiLogOut, FiPlus, FiShield } from "react-icons/fi";
+import { FiLogIn, FiLogOut, FiPlus, FiShield, FiUser } from "react-icons/fi";
 
 export default function Navbar() {
     const { user, loading, openLoginModal } = useAuth();
@@ -48,12 +48,16 @@ export default function Navbar() {
                                         href={`/user/${user.uid}`}
                                         className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                                     >
-                                        {user.photoURL && (
+                                        {user.photoURL ? (
                                             <img
                                                 src={user.photoURL}
                                                 alt="avatar"
                                                 className="w-8 h-8 rounded-full border border-neon-blue"
                                             />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full border border-neon-blue flex items-center justify-center bg-neon-blue/20">
+                                                <FiUser className="text-neon-blue" size={16} />
+                                            </div>
                                         )}
                                         <span className="text-sm text-text-secondary hidden sm:inline hover:text-neon-blue transition-colors">
                                             {user.displayName}

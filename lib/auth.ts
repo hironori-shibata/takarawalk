@@ -51,7 +51,8 @@ export async function signUpWithEmail(email: string, password: string, displayNa
     }
     const result = await createUserWithEmailAndPassword(auth, email, password);
     if (result.user && displayName) {
-        await updateProfile(result.user, { displayName });
+        const photoURL = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(displayName)}`;
+        await updateProfile(result.user, { displayName, photoURL });
     }
     return result.user;
 }
