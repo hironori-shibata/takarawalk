@@ -29,7 +29,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
 
-    if (!isOpen || user) return null;
+    const isLoggedIn = user && !user.isAnonymous;
+    if (!isOpen || isLoggedIn) return null;
 
     const resetState = () => {
         setError(null);

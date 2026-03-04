@@ -162,7 +162,7 @@ export default function HomePage() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                    {user ? (
+                    {user && !user.isAnonymous ? (
                         <Link href="/create" className="cyber-btn text-lg px-8 py-4 flex items-center gap-2">
                             <FiZap size={20} />
                             謎を作成する
