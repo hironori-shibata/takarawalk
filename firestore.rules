@@ -123,11 +123,26 @@ service cloud.firestore {
       // 誰でも読み取り可（ユーザープロフィールページ）
       allow read: if true;
 
-      // 自分自身のドキュメントのみ作成・更新可（ログイン時の自動 upsert / SNSリンク保存）
-      allow create, update: if request.auth != null
+      // 自分自身のドキュメントのみ作成可（初回ログイン時）
+      allow create: if request.auth != null
           && request.appCheck != null
           && request.auth.uid == userId
           && request.resource.data.keys().hasOnly(['displayName', 'photoURL', 'lastLoginAt', 'socialLinks'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() > 0
+          && request.resource.data.displayName.size() <= 50
+          && (!request.resource.data.keys().hasAny(['photoURL']) || (request.resource.data.photoURL is string && request.resource.data.photoURL.size() <= 500))
+          && (!request.resource.data.keys().hasAny(['socialLinks']) || (
+              request.resource.data.socialLinks is map
+              && request.resource.data.socialLinks.keys().hasOnly(['twitter', 'instagram', 'github'])
+          ));
+
+      // 自分自身のドキュメントのみ更新可（ログイン時の自動 upsert / SNSリンク保存）
+      // affectedKeys を使うことで merge: true 時に変更外フィールドが既存ドキュメントにあっても正しく評価される
+      allow update: if request.auth != null
+          && request.appCheck != null
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastLoginAt', 'socialLinks'])
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() > 0
           && request.resource.data.displayName.size() <= 50

@@ -121,7 +121,9 @@ export default function CreatePage() {
                 return;
             }
 
-            const imageRef = ref(storage!, `puzzles/${user!.uid}_${Date.now()}_${uploadFile.name}`);
+            // ファイル名の正規表現特殊文字をサニタイズ（storage.rulesの matches() が正しく評価されるよう）
+            const safeName = uploadFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const imageRef = ref(storage!, `puzzles/${user!.uid}_${Date.now()}_${safeName}`);
             await uploadBytes(imageRef, uploadFile);
             const imageUrl = await getDownloadURL(imageRef);
 
