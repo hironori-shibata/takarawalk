@@ -2,9 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged, signInAnonymously } from "firebase/auth";
-import { auth, db, appCheck, isConfigured } from "@/lib/firebase";
+import { auth, db, appCheckReady, isConfigured } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { getToken } from "firebase/app-check";
 
 interface AuthContextType {
     user: User | null;
@@ -37,30 +36,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                // ログインしていない場合は匿名認証で自動サインイン
                 try {
                     await signInAnonymously(auth!);
                 } catch (e) {
                     console.error("Anonymous sign-in failed:", e);
                     setLoading(false);
                 }
-                // onAuthStateChanged が再度発火するので setUser は次のコールに任せる
                 return;
             }
             setUser(user);
             setLoading(false);
             // 通常ログインユーザーのみ users ドキュメントを upsert
             if (!user.isAnonymous && db) {
-                if (appCheck) {
-                    try {
-                        // App Checkの初回トークン取得を待機することで、直後のリクエストが弾かれるのを防ぐ
-                        await getToken(appCheck, false);
-                    } catch (err) {
-                        console.error("App Check token error:", err);
-                    }
-                }
-
                 try {
+                    // App Check トークンが SDK にキャッシュされるのを待ってから書き込む
+                    await appCheckReady;
                     await setDoc(
                         doc(db, "users", user.uid),
                         {

@@ -1,0 +1,21 @@
+[debug] [2026-03-04T16:43:43.075Z] ----------------------------------------------------------------------
+[debug] [2026-03-04T16:43:43.079Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\yamat\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only firestore:rules,storage --project takarawalk
+[debug] [2026-03-04T16:43:43.080Z] CLI Version:   15.7.0
+[debug] [2026-03-04T16:43:43.080Z] Platform:      win32
+[debug] [2026-03-04T16:43:43.080Z] Node Version:  v22.14.0
+[debug] [2026-03-04T16:43:43.081Z] Time:          Thu Mar 05 2026 01:43:43 GMT+0900 (日本標準時)
+[debug] [2026-03-04T16:43:43.081Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-04T16:43:45.970Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-04T16:43:45.971Z] > authorizing via signed-in user (baburusukuea@gmail.com)
+[debug] [2026-03-04T16:43:45.971Z] [iam] checking project takarawalk for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]
+[debug] [2026-03-04T16:43:45.972Z] Checked if tokens are valid: false, expires at: 1772642081792
+[debug] [2026-03-04T16:43:45.973Z] Checked if tokens are valid: false, expires at: 1772642081792
+[debug] [2026-03-04T16:43:45.973Z] > refreshing access token with scopes: []
+[debug] [2026-03-04T16:43:45.975Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-03-04T16:43:45.976Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-03-04T16:43:46.215Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-03-04T16:43:46.216Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-03-04T16:43:46.235Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/takarawalk:testIamPermissions [none]
+[debug] [2026-03-04T16:43:46.235Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/takarawalk:testIamPermissions  x-goog-user-project=takarawalk
+[debug] [2026-03-04T16:43:46.235Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/takarawalk:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebaserules.releases.create","firebaserules.releases.update","firebaserules.rulesets.create"]}

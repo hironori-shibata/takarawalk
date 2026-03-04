@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { db, storage, appCheck } from "@/lib/firebase";
+import { db, storage, appCheckReady } from "@/lib/firebase";
 import {
     collection,
     query,
@@ -17,7 +17,6 @@ import {
     deleteDoc,
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
-import { getToken } from "firebase/app-check";
 import { toDate, formatDateTime } from "@/lib/timeUtils";
 import {
     FiCheck,
@@ -142,9 +141,7 @@ export default function UserProfilePage() {
         if (!db || !isOwnProfile) return;
         setSavingSocial(true);
         try {
-            if (appCheck) {
-                try { await getToken(appCheck, false); } catch (e) { console.warn(e); }
-            }
+            await appCheckReady;
             await setDoc(
                 doc(db, "users", userId),
                 {
@@ -170,9 +167,7 @@ export default function UserProfilePage() {
     async function handleDeletePuzzle(puzzleId: string, imageUrl?: string) {
         if (!db || !isOwnProfile) return;
         try {
-            if (appCheck) {
-                try { await getToken(appCheck, false); } catch (e) { console.warn(e); }
-            }
+            await appCheckReady;
             await deleteDoc(doc(db, "puzzles", puzzleId));
 
             // Delete image from storage

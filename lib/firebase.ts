@@ -21,14 +21,23 @@ let appCheck: AppCheck | null = null;
 
 const isConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "your_api_key_here";
 
+/**
+ * App Check トークンが最初に取得されるまで待機する Promise。
+ * Firebase SDK はトークンがキャッシュされる前にリクエストを送信するとトークンなしで送る仕様のため、
+ * すべての Firestore / Storage 操作の前にこの Promise を await する必要がある。
+ * サーバーサイド（SSR）では即座に resolve される（App Check はクライアントのみ）。
+ */
+let appCheckReady: Promise<void> = Promise.resolve();
+
 if (isConfigured) {
     try {
         app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-        // App Check — only initialise client-side and when site key is provided
+
+        // App Check — クライアント側かつサイトキーが提供されている場合のみ初期化
         if (typeof window !== "undefined") {
             const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
             if (siteKey) {
-                // Next.jsのHMR等での二重初期化を防ぎ、インスタンスを再利用
+                // Next.js の HMR 等での二重初期化を防ぎ、インスタンスを再利用
                 if (!(window as any).__appCheckInstance) {
                     (window as any).__appCheckInstance = initializeAppCheck(app, {
                         provider: new ReCaptchaV3Provider(siteKey),
@@ -37,11 +46,18 @@ if (isConfigured) {
                 }
                 appCheck = (window as any).__appCheckInstance;
 
-                // 初期化直後にバックグラウンドでトークン取得を走らせ、Race conditionを防止
+                // 初期化直後にトークン取得を開始し、完了するまで appCheckReady で待機可能にする。
+                // この getToken の完了により SDK 内部のトークンキャッシュが確実に埋まり、
+                // 以降のリクエストにトークンが付与されることを保証する。
                 if (appCheck) {
-                    getToken(appCheck, false).catch((err) => {
-                        console.warn("App Check background token fetch failed:", err);
-                    });
+                    appCheckReady = getToken(appCheck, false)
+                        .then(() => {
+                            // トークン取得成功 — 以降の SDK リクエストはトークン付きになる
+                        })
+                        .catch((err) => {
+                            console.warn("App Check initial token fetch failed:", err);
+                            // 失敗してもアプリは継続（ルールで弾かれる可能性はある）
+                        });
                 }
             }
         }
@@ -54,4 +70,4 @@ if (isConfigured) {
     }
 }
 
-export { app, auth, db, storage, appCheck, isConfigured };
+export { app, auth, db, storage, appCheck, appCheckReady, isConfigured };

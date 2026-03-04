@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { db, storage } from "@/lib/firebase";
+import { db, storage, appCheckReady } from "@/lib/firebase";
 import {
     doc,
     runTransaction,
@@ -119,19 +119,20 @@ function PuzzleContent() {
 
     useEffect(() => {
         if (isCreator && puzzle?.answerType === "keyword" && showAnswers && secretAnswers === null && db) {
-            import("firebase/firestore").then(({ getDoc, doc }) => {
-                getDoc(doc(db!, "puzzles", puzzleId, "secrets", "data")).then(snap => {
-                    if (snap.exists() && snap.data().answers) {
-                        setSecretAnswers(snap.data().answers);
-                    } else {
-                        // Fallback to old format
-                        const oldAnswers = puzzle.answers && puzzle.answers.length > 0
-                            ? puzzle.answers
-                            : puzzle.answer ? [puzzle.answer] : [];
-                        setSecretAnswers(oldAnswers);
-                    }
-                }).catch(() => setSecretAnswers([]));
-            });
+            appCheckReady.then(() =>
+                import("firebase/firestore").then(({ getDoc, doc }) => {
+                    getDoc(doc(db!, "puzzles", puzzleId, "secrets", "data")).then(snap => {
+                        if (snap.exists() && snap.data().answers) {
+                            setSecretAnswers(snap.data().answers);
+                        } else {
+                            const oldAnswers = puzzle.answers && puzzle.answers.length > 0
+                                ? puzzle.answers
+                                : puzzle.answer ? [puzzle.answer] : [];
+                            setSecretAnswers(oldAnswers);
+                        }
+                    }).catch(() => setSecretAnswers([]));
+                })
+            );
         }
     }, [isCreator, puzzle?.answerType, showAnswers, secretAnswers, puzzleId, db, puzzle]);
 
@@ -143,19 +144,22 @@ function PuzzleContent() {
         }
     }, [user, nameSubmitted]);
 
-    // Real-time listener
+    // Real-time listener — App Check トークンが準備できてからリスナーを開始
     useEffect(() => {
         if (!puzzleId || !db) return;
-        const unsubscribe = onSnapshot(
-            doc(db, "puzzles", puzzleId),
-            (snap) => {
-                if (snap.exists()) setPuzzle(snap.data() as PuzzleData);
-                else setNotFound(true);
-                setLoading(false);
-            },
-            () => { setNotFound(true); setLoading(false); }
-        );
-        return () => unsubscribe();
+        let unsubscribe: (() => void) | undefined;
+        appCheckReady.then(() => {
+            unsubscribe = onSnapshot(
+                doc(db!, "puzzles", puzzleId),
+                (snap) => {
+                    if (snap.exists()) setPuzzle(snap.data() as PuzzleData);
+                    else setNotFound(true);
+                    setLoading(false);
+                },
+                () => { setNotFound(true); setLoading(false); }
+            );
+        });
+        return () => { if (unsubscribe) unsubscribe(); };
     }, [puzzleId]);
 
     // Elapsed time ticker
@@ -201,6 +205,7 @@ function PuzzleContent() {
             setResult(null);
 
             try {
+                await appCheckReady;
                 const puzzleRef = doc(db, "puzzles", puzzleId);
                 const isQR = puzzle.answerType === "qrcode";
                 const preparedAnswer = isQR ? submittedAnswer : normalizeAnswer(submittedAnswer);
@@ -314,6 +319,7 @@ function PuzzleContent() {
         if (!db || !puzzle) return;
         setSaving(true);
         try {
+            await appCheckReady;
             await updateDoc(doc(db, "puzzles", puzzleId), {
                 title: editTitle.trim(),
                 description: editDescription.trim(),
@@ -342,6 +348,7 @@ function PuzzleContent() {
         if (!db || !puzzle) return;
         setDeleting(true);
         try {
+            await appCheckReady;
             await deleteDoc(doc(db, "puzzles", puzzleId));
             if (storage && puzzle.imageUrl) {
                 try { await deleteObject(ref(storage, puzzle.imageUrl)); } catch { /* ignore */ }

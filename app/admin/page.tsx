@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { db, storage } from "@/lib/firebase";
+import { db, storage, appCheckReady } from "@/lib/firebase";
 import {
     collection,
     query,
@@ -49,6 +49,7 @@ export default function AdminPage() {
 
         async function fetchData() {
             try {
+                await appCheckReady;
                 // Fetch all puzzles
                 const puzzlesQuery = query(
                     collection(db!, "puzzles"),
@@ -114,6 +115,7 @@ export default function AdminPage() {
     async function handleDeletePuzzle(puzzleId: string, imageUrl: string) {
         if (!db) return;
         try {
+            await appCheckReady;
             await deleteDoc(doc(db, "puzzles", puzzleId));
 
             // Try to delete image from storage
@@ -151,6 +153,7 @@ export default function AdminPage() {
     async function handleDeleteUser(uid: string) {
         if (!db) return;
         try {
+            await appCheckReady;
             // Delete all puzzles by this user
             const userPuzzlesQuery = query(
                 collection(db, "puzzles"),
