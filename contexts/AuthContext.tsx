@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged, signInAnonymously } from "firebase/auth";
-import { auth, db, isConfigured } from "@/lib/firebase";
+import { auth, db, appCheck, isConfigured } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { getToken } from "firebase/app-check";
 
 interface AuthContextType {
     user: User | null;
@@ -50,6 +51,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setLoading(false);
             // 通常ログインユーザーのみ users ドキュメントを upsert
             if (!user.isAnonymous && db) {
+                if (appCheck) {
+                    try {
+                        // App Checkの初回トークン取得を待機することで、直後のリクエストが弾かれるのを防ぐ
+                        await getToken(appCheck, false);
+                    } catch (err) {
+                        console.error("App Check token error:", err);
+                    }
+                }
+
                 try {
                     await setDoc(
                         doc(db, "users", user.uid),

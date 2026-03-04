@@ -28,6 +28,10 @@ if (isConfigured) {
         if (typeof window !== "undefined") {
             const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
             if (siteKey) {
+                if (process.env.NODE_ENV !== "production") {
+                    // ローカル開発用デバッグトークンの有効化
+                    (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = process.env.NEXT_PUBLIC_APP_CHECK_DEBUG_TOKEN || true;
+                }
                 appCheck = initializeAppCheck(app, {
                     provider: new ReCaptchaV3Provider(siteKey),
                     isTokenAutoRefreshEnabled: true,
