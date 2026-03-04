@@ -9,7 +9,8 @@ export default function Navbar() {
     const { user, loading, openLoginModal } = useAuth();
 
     const adminUid = process.env.NEXT_PUBLIC_ADMIN_UID;
-    const isAdmin = user && adminUid && user.uid === adminUid;
+    const isLoggedIn = user && !user.isAnonymous;
+    const isAdmin = isLoggedIn && adminUid && user.uid === adminUid;
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 bg-cyber-surface/80 backdrop-blur-md border-b border-cyber-border">
@@ -25,7 +26,7 @@ export default function Navbar() {
             <div className="flex items-center gap-4">
                 {!loading && (
                     <>
-                        {user ? (
+                        {isLoggedIn ? (
                             <>
                                 <Link
                                     href="/create"

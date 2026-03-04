@@ -13,7 +13,7 @@ service firebase.storage {
 
       // アップロード制限:
       //   - ログインユーザーのみ
-      //   - App Check検証済み
+      //   - App Check検証済み（強制モード有効時）
       //   - ファイル名は自分のUID接頭辞であること
       //   - ファイルサイズ 500kB 以内（圧縮後）
       //   - 画像ファイルのみ（MIME タイプで制限）
@@ -29,6 +29,7 @@ service firebase.storage {
       // 削除: ログインユーザーのみ、かつ自分のUIDが付与されたファイルのみ削除可能
       // （アプリ側のコードで `${uid}_${timestamp}_...` の形式で保存される前提）
       allow delete: if request.auth != null
+          && request.appCheck != null
           && filename.matches(request.auth.uid + '_.*');
     }
   }

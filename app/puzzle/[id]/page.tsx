@@ -178,11 +178,7 @@ function PuzzleContent() {
         async (submittedAnswer: string) => {
             if (!puzzle || submitting || !db) return;
             if (!nameSubmitted || !playerName.trim()) return;
-
-            if (!user) {
-                setResult({ type: "error", message: "謎に回答するにはログインが必要です。" });
-                return;
-            }
+            if (!user) return; // 匿名認証完了前はスキップ
 
             // --- Bot countermeasures ---
             // 1. Honeypot
@@ -229,7 +225,7 @@ function PuzzleContent() {
                     const correct = data.hashedAnswers.includes(hashedSubmitted);
 
                     if (correct) {
-                        const attemptRef = doc(db!, "puzzles", puzzleId, "attempts", user.uid);
+                        const attemptRef = doc(db!, "puzzles", puzzleId, "attempts", user!.uid);
                         transaction.set(attemptRef, {
                             answer: preparedAnswer
                         });
@@ -237,7 +233,7 @@ function PuzzleContent() {
                         transaction.update(puzzleRef, {
                             solved: true,
                             solvedBy: playerName.trim(),
-                            solvedByUid: user.uid,
+                            solvedByUid: user!.uid,
                             solvedAt: serverTimestamp(),
                         });
                         return true;

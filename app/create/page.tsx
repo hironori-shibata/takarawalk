@@ -56,7 +56,7 @@ export default function CreatePage() {
         );
     }
 
-    if (!user) {
+    if (!user || user.isAnonymous) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center">
                 <h1 className="font-[family-name:var(--font-orbitron)] text-2xl font-bold neon-text-blue mb-4">
