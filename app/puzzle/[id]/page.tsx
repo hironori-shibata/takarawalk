@@ -16,6 +16,7 @@ import {
 import { ref, deleteObject } from "firebase/storage";
 import { toDate, formatDateTime, formatElapsed } from "@/lib/timeUtils";
 import { downloadQrImage } from "@/lib/qrImageUtils";
+import { hashAnswer, normalizeAnswer } from "@/lib/hashUtils";
 import QrScanner from "@/components/QrScanner";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -40,8 +41,9 @@ interface PuzzleData {
     location?: string;
     imageUrl: string;
     answerType: "keyword" | "qrcode";
-    answer: string;
-    answers?: string[];
+    answer?: string;      // deprecated
+    answers?: string[];   // deprecated
+    hashedAnswers?: string[];
     creatorId: string;
     creatorName: string;
     solved: boolean;
@@ -61,9 +63,8 @@ type ResultState =
 
 const RATE_LIMIT_MS = 3000; // 3-second cooldown between answers
 
-function normalize(s: string): string {
-    return s.toLowerCase().normalize("NFKC").replace(/\s+/g, "");
-}
+
+
 
 function PuzzleContent() {
     const params = useParams();
@@ -112,6 +113,28 @@ function PuzzleContent() {
     const [showShareModal, setShowShareModal] = useState(false);
     const [shareText, setShareText] = useState("");
 
+    const [secretAnswers, setSecretAnswers] = useState<string[] | null>(null);
+
+    const isCreator = user?.uid === puzzle?.creatorId;
+
+    useEffect(() => {
+        if (isCreator && puzzle?.answerType === "keyword" && showAnswers && secretAnswers === null && db) {
+            import("firebase/firestore").then(({ getDoc, doc }) => {
+                getDoc(doc(db!, "puzzles", puzzleId, "secrets", "data")).then(snap => {
+                    if (snap.exists() && snap.data().answers) {
+                        setSecretAnswers(snap.data().answers);
+                    } else {
+                        // Fallback to old format
+                        const oldAnswers = puzzle.answers && puzzle.answers.length > 0
+                            ? puzzle.answers
+                            : puzzle.answer ? [puzzle.answer] : [];
+                        setSecretAnswers(oldAnswers);
+                    }
+                }).catch(() => setSecretAnswers([]));
+            });
+        }
+    }, [isCreator, puzzle?.answerType, showAnswers, secretAnswers, puzzleId, db, puzzle]);
+
     // Auto-fill name if logged in
     useEffect(() => {
         if (user?.displayName && !nameSubmitted) {
@@ -156,6 +179,11 @@ function PuzzleContent() {
             if (!puzzle || submitting || !db) return;
             if (!nameSubmitted || !playerName.trim()) return;
 
+            if (!user) {
+                setResult({ type: "error", message: "謎に回答するにはログインが必要です。" });
+                return;
+            }
+
             // --- Bot countermeasures ---
             // 1. Honeypot
             if (honeypot) {
@@ -178,6 +206,9 @@ function PuzzleContent() {
 
             try {
                 const puzzleRef = doc(db, "puzzles", puzzleId);
+                const isQR = puzzle.answerType === "qrcode";
+                const preparedAnswer = isQR ? submittedAnswer : normalizeAnswer(submittedAnswer);
+                const hashedSubmitted = await hashAnswer(preparedAnswer, puzzleId);
 
                 const isCorrect = await runTransaction(db, async (transaction) => {
                     const puzzleDoc = await transaction.get(puzzleRef);
@@ -189,26 +220,24 @@ function PuzzleContent() {
                         return false;
                     }
 
-                    let correct = false;
-                    if (data.answerType === "keyword") {
-                        const answerList: string[] =
-                            data.answers && data.answers.length > 0
-                                ? data.answers
-                                : data.answer ? [data.answer] : [];
-                        correct = answerList.some(
-                            (a) => normalize(submittedAnswer) === normalize(a)
-                        );
-                    } else {
-                        correct =
-                            submittedAnswer === data.answer ||
-                            (data.answers ? data.answers.includes(submittedAnswer) : false);
+                    if (!data.hashedAnswers || data.hashedAnswers.length === 0) {
+                        // 旧パズル（ハッシュ化未対応）はエラーを返す
+                        setResult({ type: "error", message: "このパズルは旧形式のため回答できません。管理者にお問い合わせください。" });
+                        return false;
                     }
 
+                    const correct = data.hashedAnswers.includes(hashedSubmitted);
+
                     if (correct) {
+                        const attemptRef = doc(db!, "puzzles", puzzleId, "attempts", user.uid);
+                        transaction.set(attemptRef, {
+                            answer: preparedAnswer
+                        });
+
                         transaction.update(puzzleRef, {
                             solved: true,
                             solvedBy: playerName.trim(),
-                            solvedByUid: user?.uid || null,
+                            solvedByUid: user.uid,
                             solvedAt: serverTimestamp(),
                         });
                         return true;
@@ -328,7 +357,7 @@ function PuzzleContent() {
         }
     }
 
-    const isCreator = user?.uid === puzzle?.creatorId;
+
 
     // ---------- Loading ----------
     if (loading) {
@@ -426,6 +455,7 @@ function PuzzleContent() {
                             placeholder="あなたの名前..."
                             className="cyber-input text-center"
                             required
+                            maxLength={50}
                             autoFocus
                         />
                         <button type="submit" disabled={!playerName.trim()} className="cyber-btn w-full">
@@ -446,15 +476,15 @@ function PuzzleContent() {
                     <div className="text-left space-y-4 cyber-card p-6 mb-6">
                         <div>
                             <label className="block text-xs text-text-secondary mb-1 uppercase tracking-wider">タイトル</label>
-                            <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="cyber-input" autoFocus />
+                            <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="cyber-input" maxLength={30} autoFocus />
                         </div>
                         <div>
                             <label className="block text-xs text-text-secondary mb-1 uppercase tracking-wider">概要</label>
-                            <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="cyber-input min-h-[80px] resize-y" rows={3} />
+                            <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} className="cyber-input min-h-[80px] resize-y" maxLength={500} rows={3} />
                         </div>
                         <div>
                             <label className="block text-xs text-text-secondary mb-1 uppercase tracking-wider">場所</label>
-                            <input type="text" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} className="cyber-input" />
+                            <input type="text" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} className="cyber-input" maxLength={30} />
                         </div>
                         <div className="flex gap-2 justify-end">
                             <button onClick={() => setEditing(false)} className="text-xs px-3 py-1.5 text-text-muted hover:text-text-primary transition-colors">キャンセル</button>
@@ -467,7 +497,7 @@ function PuzzleContent() {
                 ) : (
                     <>
                         <div className="flex items-start justify-center gap-2">
-                            <h1 className="font-[family-name:var(--font-orbitron)] text-2xl sm:text-3xl font-bold neon-text-blue mb-2">
+                            <h1 className="font-[family-name:var(--font-orbitron)] text-2xl sm:text-3xl font-bold neon-text-blue mb-2 truncate max-w-xs sm:max-w-md">
                                 {puzzle.title}
                             </h1>
                             {isCreator && !puzzle.solved && (
@@ -595,6 +625,7 @@ function PuzzleContent() {
                                 className="cyber-input flex-1"
                                 disabled={submitting}
                                 autoFocus
+                                maxLength={100}
                             />
                             <button
                                 type="submit"
@@ -648,14 +679,17 @@ function PuzzleContent() {
                     </div>
                     {showAnswers && (
                         <div className="space-y-1">
-                            {(puzzle.answers && puzzle.answers.length > 0
-                                ? puzzle.answers
-                                : puzzle.answer ? [puzzle.answer] : []
-                            ).map((a, i) => (
-                                <p key={i} className="text-neon-green font-bold text-lg tracking-wider">
-                                    {a}
-                                </p>
-                            ))}
+                            {secretAnswers === null ? (
+                                <p className="text-sm text-text-muted">読み込み中...</p>
+                            ) : secretAnswers.length > 0 ? (
+                                secretAnswers.map((a, i) => (
+                                    <p key={i} className="text-neon-green font-bold text-lg tracking-wider">
+                                        {a}
+                                    </p>
+                                ))
+                            ) : (
+                                <p className="text-sm text-text-muted">回答が設定されていません</p>
+                            )}
                         </div>
                     )}
                 </div>
@@ -712,7 +746,7 @@ function PuzzleContent() {
             {/* Footer */}
             <div className="mt-6 flex items-center justify-between">
                 <span className="text-sm text-text-muted">
-                    プレイヤー: <span className="text-neon-blue">{playerName}</span>
+                    プレイヤー: <span className="text-neon-blue truncate max-w-[120px] inline-block align-bottom">{playerName}</span>
                 </span>
                 {!puzzle.solved && (
                     <button

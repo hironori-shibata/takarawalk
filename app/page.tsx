@@ -309,16 +309,16 @@ function PuzzleCard({ puzzle }: { puzzle: RecentPuzzle }) {
                         by{" "}
                         <Link
                             href={`/user/${puzzle.creatorId}`}
-                            className="hover:text-neon-blue transition-colors"
+                            className="hover:text-neon-blue transition-colors truncate max-w-[120px] inline-block align-bottom"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {puzzle.creatorName}
                         </Link>
                     </span>
                     {puzzle.location && (
-                        <span className="text-xs text-text-muted flex items-center gap-1">
-                            <FiMapPin size={10} />
-                            {puzzle.location}
+                        <span className="text-xs text-text-muted flex items-center gap-1 max-w-[100px] truncate">
+                            <FiMapPin size={10} className="flex-shrink-0" />
+                            <span className="truncate">{puzzle.location}</span>
                         </span>
                     )}
                     {createdDate && (

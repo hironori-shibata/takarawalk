@@ -19,7 +19,7 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-    title: "nazo 1 — 先着1名の謎解きバトル",
+    title: "ナゾワン - １枚謎×勝者１人のリアルタイム謎解きバトル「nazo 1」",
     description:
         "先着1名のみがクリアできる謎解き共有Webアプリ。問題作成者が1枚絵の謎を投稿し、最初に解いたユーザーだけが勝者になります。",
 };

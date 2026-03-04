@@ -4,22 +4,21 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { db, storage } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { QRCodeSVG } from "qrcode.react";
 import { resizeImageToTarget } from "@/lib/imageUtils";
 import { downloadQrImage } from "@/lib/qrImageUtils";
+import { hashAnswer, normalizeAnswer } from "@/lib/hashUtils";
 import { FiUpload, FiCheck, FiCopy, FiImage, FiPlus, FiX, FiDownload, FiShare2 } from "react-icons/fi";
 import { SHARE_TEMPLATES } from "@/lib/shareTemplates";
 import XShareModal from "@/components/XShareModal";
 
 function generateToken(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
-    for (let i = 0; i < 32; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, (b) => chars[b % chars.length]).join("");
 }
 
 const MAX_ANSWERS = 10;
@@ -122,20 +121,26 @@ export default function CreatePage() {
                 return;
             }
 
-            const imageRef = ref(storage!, `puzzles/${Date.now()}_${uploadFile.name}`);
+            const imageRef = ref(storage!, `puzzles/${user!.uid}_${Date.now()}_${uploadFile.name}`);
             await uploadBytes(imageRef, uploadFile);
             const imageUrl = await getDownloadURL(imageRef);
 
             const finalAnswers = answerType === "keyword" ? trimmedAnswers : [qrToken];
 
-            const docRef = await addDoc(collection(db!, "puzzles"), {
+            // ドキュメントIDを先に生成してソルトとして使用
+            const docRef = doc(collection(db!, "puzzles"));
+
+            const hashedAnswers = await Promise.all(
+                finalAnswers.map(a => hashAnswer(answerType === "keyword" ? normalizeAnswer(a) : a, docRef.id))
+            );
+
+            await setDoc(docRef, {
                 title: title.trim(),
                 description: description.trim(),
                 location: location.trim(),
                 imageUrl,
                 answerType,
-                answer: finalAnswers[0],
-                answers: finalAnswers,
+                hashedAnswers,
                 creatorId: user!.uid,
                 creatorName: user!.displayName || "匿名",
                 solved: false,
@@ -143,6 +148,11 @@ export default function CreatePage() {
                 solvedByUid: null,
                 solvedAt: null,
                 createdAt: serverTimestamp(),
+            });
+
+            // Save plaintext answers to subcollection
+            await setDoc(doc(db!, "puzzles", docRef.id, "secrets", "data"), {
+                answers: finalAnswers
             });
 
             const url = `${window.location.origin}/puzzle/${docRef.id}`;
@@ -306,44 +316,50 @@ export default function CreatePage() {
             <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Title */}
                 <div>
-                    <label className="block text-sm font-bold text-text-secondary mb-2 uppercase tracking-wider">
-                        タイトル
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-bold text-text-secondary uppercase tracking-wider">タイトル</label>
+                        <span className={`text-xs ${title.length >= 30 ? "text-neon-pink" : "text-text-muted"}`}>{title.length}/30</span>
+                    </div>
                     <input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="謎解きのタイトルを入力..."
                         className="cyber-input"
+                        maxLength={30}
                         required
                     />
                 </div>
 
                 {/* Description */}
                 <div>
-                    <label className="block text-sm font-bold text-text-secondary mb-2 uppercase tracking-wider">
-                        概要
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-bold text-text-secondary uppercase tracking-wider">概要</label>
+                        <span className={`text-xs ${description.length >= 500 ? "text-neon-pink" : "text-text-muted"}`}>{description.length}/500</span>
+                    </div>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="謎の説明やヒントを入力...（任意）"
                         className="cyber-input min-h-[120px] resize-y"
+                        maxLength={500}
                         rows={4}
                     />
                 </div>
 
                 {/* Location */}
                 <div>
-                    <label className="block text-sm font-bold text-text-secondary mb-2 uppercase tracking-wider">
-                        場所
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-bold text-text-secondary uppercase tracking-wider">場所</label>
+                        <span className={`text-xs ${location.length >= 30 ? "text-neon-pink" : "text-text-muted"}`}>{location.length}/30</span>
+                    </div>
                     <input
                         type="text"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         placeholder="大まかな場所を入力（例：渋谷駅周辺）...（任意）"
                         className="cyber-input"
+                        maxLength={30}
                     />
                 </div>
 
@@ -447,6 +463,7 @@ export default function CreatePage() {
                                         onChange={(e) => updateAnswer(i, e.target.value)}
                                         placeholder={i === 0 ? "正解キーワードを入力..." : `別の正解（${i + 1}）`}
                                         className="cyber-input flex-1"
+                                        maxLength={100}
                                     />
                                     {answers.length > 1 && (
                                         <button

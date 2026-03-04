@@ -13,18 +13,23 @@ service firebase.storage {
 
       // アップロード制限:
       //   - ログインユーザーのみ
+      //   - App Check検証済み
+      //   - ファイル名は自分のUID接頭辞であること
       //   - ファイルサイズ 500kB 以内（圧縮後）
       //   - 画像ファイルのみ（MIME タイプで制限）
       allow create: if request.auth != null
+          && request.appCheck != null
+          && filename.matches(request.auth.uid + '_.*')
           && request.resource.size <= 500 * 1024
           && request.resource.contentType.matches('image/.*');
 
       // 上書き禁止（更新は許可しない）
       allow update: if false;
 
-      // 削除: ログインユーザーのみ
-      // （アプリ側のコードで作成者・管理者のみが削除操作を呼び出す）
-      allow delete: if request.auth != null;
+      // 削除: ログインユーザーのみ、かつ自分のUIDが付与されたファイルのみ削除可能
+      // （アプリ側のコードで `${uid}_${timestamp}_...` の形式で保存される前提）
+      allow delete: if request.auth != null
+          && filename.matches(request.auth.uid + '_.*');
     }
   }
 }

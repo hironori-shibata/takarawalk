@@ -39,6 +39,17 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         resetState();
+
+        // クライアント側バリデーション
+        if (!isResetMode && password.length < 8) {
+            setError("パスワードは8文字以上で設定してください。");
+            return;
+        }
+        if (isSignUp && displayName.trim().length === 0) {
+            setError("ユーザー名を入力してください。");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -46,7 +57,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 await resetPassword(email);
                 setMessage("パスワード再設定のメールを送信しました。");
             } else if (isSignUp) {
-                await signUpWithEmail(email, password, displayName);
+                await signUpWithEmail(email, password, displayName.trim());
                 onClose();
             } else {
                 await signInWithEmail(email, password);
@@ -59,7 +70,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             } else if (err.code === "auth/email-already-in-use") {
                 setError("このメールアドレスは既に登録されています。");
             } else if (err.code === "auth/weak-password") {
-                setError("パスワードは6文字以上で設定してください。");
+                setError("パスワードは8文字以上で設定してください。");
             } else {
                 setError("エラーが発生しました。もう一度お試しください。");
             }
@@ -93,20 +104,34 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 </h2>
 
                 {!isResetMode && (
-                    <div className="flex gap-2 mb-6 p-1 bg-cyber-surface rounded-lg neon-border">
+                    <>
                         <button
-                            onClick={() => { setIsSignUp(false); resetState(); }}
-                            className={`flex-1 py-2 text-sm font-bold transition-colors ${!isSignUp ? "bg-neon-blue/20 text-neon-blue rounded" : "text-text-muted hover:text-text-primary"}`}
+                            onClick={handleGoogleSignIn}
+                            className="w-full relative group border border-cyber-border hover:border-neon-blue bg-cyber-surface hover:bg-neon-blue/5 transition-all text-white p-3 flex items-center justify-center gap-3 rounded-sm"
                         >
-                            ログイン
+                            <div className="bg-white p-0.5 rounded-full"><FcGoogle size={20} /></div>
+                            <span className="font-bold relative z-10 group-hover:text-neon-blue transition-colors">Googleでログイン</span>
                         </button>
-                        <button
-                            onClick={() => { setIsSignUp(true); resetState(); }}
-                            className={`flex-1 py-2 text-sm font-bold transition-colors ${isSignUp ? "bg-neon-blue/20 text-neon-blue rounded" : "text-text-muted hover:text-text-primary"}`}
-                        >
-                            新規登録
-                        </button>
-                    </div>
+
+                        <div className="my-6 border-b border-cyber-border relative">
+                            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0a0a0f] px-2 text-xs text-text-muted">OR</span>
+                        </div>
+
+                        <div className="flex gap-2 mb-6 p-1 bg-cyber-surface rounded-lg neon-border">
+                            <button
+                                onClick={() => { setIsSignUp(false); resetState(); }}
+                                className={`flex-1 py-2 text-sm font-bold transition-colors ${!isSignUp ? "bg-neon-blue/20 text-neon-blue rounded" : "text-text-muted hover:text-text-primary"}`}
+                            >
+                                ログイン
+                            </button>
+                            <button
+                                onClick={() => { setIsSignUp(true); resetState(); }}
+                                className={`flex-1 py-2 text-sm font-bold transition-colors ${isSignUp ? "bg-neon-blue/20 text-neon-blue rounded" : "text-text-muted hover:text-text-primary"}`}
+                            >
+                                新規登録
+                            </button>
+                        </div>
+                    </>
                 )}
 
                 {error && <div className="mb-4 p-3 bg-neon-pink/10 border border-neon-pink text-neon-pink text-sm rounded">{error}</div>}
@@ -123,8 +148,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                                     required
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
+                                    maxLength={50}
                                     className="cyber-input pl-10 w-full"
-                                    placeholder="名無し"
+                                    placeholder="名無し（50文字以内）"
                                 />
                             </div>
                         </div>
@@ -138,6 +164,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                maxLength={254}
                                 className="cyber-input pl-10 w-full"
                                 placeholder="example@nazo1.com"
                             />
@@ -153,8 +180,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
+                                    minLength={8}
+                                    maxLength={128}
                                     className="cyber-input pl-10 w-full"
-                                    placeholder="6文字以上"
+                                    placeholder="8文字以上"
                                 />
                             </div>
                         </div>
@@ -182,17 +211,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     )}
                 </div>
 
-                <div className="my-6 border-b border-cyber-border relative relative">
-                    <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0a0a0f] px-2 text-xs text-text-muted">OR</span>
-                </div>
-
-                <button
-                    onClick={handleGoogleSignIn}
-                    className="w-full relative group border border-cyber-border hover:border-neon-blue bg-cyber-surface hover:bg-neon-blue/5 transition-all text-white p-3 flex items-center justify-center gap-3 rounded-sm"
-                >
-                    <div className="bg-white p-0.5 rounded-full"><FcGoogle size={20} /></div>
-                    <span className="font-bold relative z-10 group-hover:text-neon-blue transition-colors">Googleでログイン</span>
-                </button>
             </div>
         </div>
     );
