@@ -24,10 +24,6 @@ const isConfigured = !!firebaseConfig.apiKey && firebaseConfig.apiKey !== "your_
 if (isConfigured) {
     try {
         app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-        auth = getAuth(app);
-        db = getFirestore(app);
-        storage = getStorage(app);
-
         // App Check — only initialise client-side and when site key is provided
         if (typeof window !== "undefined") {
             const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
@@ -38,6 +34,10 @@ if (isConfigured) {
                 });
             }
         }
+
+        auth = getAuth(app);
+        db = getFirestore(app);
+        storage = getStorage(app);
     } catch (error) {
         console.warn("Firebase initialization failed:", error);
     }
