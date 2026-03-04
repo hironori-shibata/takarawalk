@@ -3,9 +3,10 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { db, storage } from "@/lib/firebase";
+import { db, storage, appCheck } from "@/lib/firebase";
 import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getToken } from "firebase/app-check";
 import { QRCodeSVG } from "qrcode.react";
 import { resizeImageToTarget } from "@/lib/imageUtils";
 import { downloadQrImage } from "@/lib/qrImageUtils";
@@ -119,6 +120,15 @@ export default function CreatePage() {
                 setImageError("圧縮後のサイズが500kBを超えています。より小さい画像をお試しください。");
                 setSubmitting(false);
                 return;
+            }
+
+            // Ensure App Check token is available before upload
+            if (appCheck) {
+                try {
+                    await getToken(appCheck, false);
+                } catch (err) {
+                    console.warn("App Check token not available before upload:", err);
+                }
             }
 
             // ファイル名の正規表現特殊文字をサニタイズ（storage.rulesの matches() が正しく評価されるよう）

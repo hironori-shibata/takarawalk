@@ -20,7 +20,7 @@ service firebase.storage {
       allow create: if request.auth != null
           && request.appCheck != null
           && filename.matches(request.auth.uid + '_.*')
-          && request.resource.size <= 500 * 1024
+          && request.resource.size <= 512 * 1024
           && request.resource.contentType.matches('image/.*');
 
       // 上書き禁止（更新は許可しない）

@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
-import { initializeAppCheck, ReCaptchaV3Provider, AppCheck } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaV3Provider, AppCheck, getToken } from "firebase/app-check";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -28,10 +28,21 @@ if (isConfigured) {
         if (typeof window !== "undefined") {
             const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
             if (siteKey) {
-                appCheck = initializeAppCheck(app, {
-                    provider: new ReCaptchaV3Provider(siteKey),
-                    isTokenAutoRefreshEnabled: true,
-                });
+                // Next.jsのHMR等での二重初期化を防ぎ、インスタンスを再利用
+                if (!(window as any).__appCheckInstance) {
+                    (window as any).__appCheckInstance = initializeAppCheck(app, {
+                        provider: new ReCaptchaV3Provider(siteKey),
+                        isTokenAutoRefreshEnabled: true,
+                    });
+                }
+                appCheck = (window as any).__appCheckInstance;
+
+                // 初期化直後にバックグラウンドでトークン取得を走らせ、Race conditionを防止
+                if (appCheck) {
+                    getToken(appCheck, false).catch((err) => {
+                        console.warn("App Check background token fetch failed:", err);
+                    });
+                }
             }
         }
 
