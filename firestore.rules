@@ -18,7 +18,7 @@ service cloud.firestore {
     function isSolveUpdate(puzzleId) {
       let allowed = ['solved', 'solvedBy', 'solvedByUid', 'solvedAt'];
       return request.auth != null
-          && request.appCheck != null
+          // && request.appCheck != null // 匿名認証バグ回避のため除外
           && resource.data.solved == false
           && request.resource.data.solved == true
           && request.resource.data.solvedByUid == request.auth.uid
@@ -34,7 +34,7 @@ service cloud.firestore {
     function isCreatorEdit() {
       let allowed = ['title', 'description', 'location'];
       return request.auth != null
-          && request.appCheck != null
+          // && request.appCheck != null
           && request.auth.uid == resource.data.creatorId
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowed)
           && request.resource.data.title is string
@@ -52,7 +52,7 @@ service cloud.firestore {
 
       // ログインユーザーのみ投稿可。creatorId は自分のUIDでなければならない
       allow create: if request.auth != null
-          && request.appCheck != null
+          // && request.appCheck != null
           && request.resource.data.creatorId == request.auth.uid
           && request.resource.data.keys().hasAll(['title', 'imageUrl', 'answerType', 'creatorId', 'creatorName', 'solved', 'createdAt'])
           && request.resource.data.keys().hasOnly(['title', 'description', 'location', 'imageUrl', 'answerType', 'answer', 'answers', 'hashedAnswers', 'creatorId', 'creatorName', 'solved', 'solvedBy', 'solvedByUid', 'solvedAt', 'createdAt'])
@@ -80,16 +80,16 @@ service cloud.firestore {
 
       // 削除: 作成者 or 管理者
       allow delete: if (request.auth != null 
-      && request.appCheck != null 
+      // && request.appCheck != null 
       && request.auth.uid == resource.data.creatorId) || isAdmin();
 
       // 平文解答を保存する secrets サブコレクション
       match /secrets/data {
         allow read: if request.auth != null
-            && request.appCheck != null
+            // && request.appCheck != null
             && get(/databases/$(database)/documents/puzzles/$(puzzleId)).data.creatorId == request.auth.uid;
         allow create: if request.auth != null
-            && request.appCheck != null
+            // && request.appCheck != null
             && get(/databases/$(database)/documents/puzzles/$(puzzleId)).data.creatorId == request.auth.uid
             && request.resource.data.keys().hasOnly(['answers'])
             && request.resource.data.answers is list
@@ -103,7 +103,7 @@ service cloud.firestore {
         // ログインユーザーかつ自分に対する保存
         // hashing.sha256 を使って回答をハッシュ化し、親の hashedAnswers に含まれるか検証
         allow create: if request.auth != null
-            && request.appCheck != null
+            // && request.appCheck != null
             && request.auth.uid == userId
             && request.resource.data.keys().hasOnly(['answer'])
             && request.resource.data.answer is string
@@ -128,7 +128,7 @@ service cloud.firestore {
 
       // 自分自身のドキュメントのみ作成可（初回ログイン時）
       allow create: if request.auth != null
-          && request.appCheck != null
+          // && request.appCheck != null
           && request.auth.uid == userId
           && request.resource.data.keys().hasOnly(['displayName', 'photoURL', 'lastLoginAt', 'socialLinks'])
           && request.resource.data.displayName is string
@@ -143,7 +143,7 @@ service cloud.firestore {
       // 自分自身のドキュメントのみ更新可（ログイン時の自動 upsert / SNSリンク保存）
       // affectedKeys を使うことで merge: true 時に変更外フィールドが既存ドキュメントにあっても正しく評価される
       allow update: if request.auth != null
-          && request.appCheck != null
+          // && request.appCheck != null
           && request.auth.uid == userId
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastLoginAt', 'socialLinks'])
           && request.resource.data.displayName is string

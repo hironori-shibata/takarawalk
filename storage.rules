@@ -18,7 +18,7 @@ service firebase.storage {
       //   - ファイルサイズ 500kB 以内（圧縮後）
       //   - 画像ファイルのみ（MIME タイプで制限）
       allow create: if request.auth != null
-          && request.appCheck != null
+          // && request.appCheck != null
           && filename.matches(request.auth.uid + '_.*')
           && request.resource.size <= 512 * 1024
           && request.resource.contentType.matches('image/.*');
@@ -29,7 +29,7 @@ service firebase.storage {
       // 削除: ログインユーザーのみ、かつ自分のUIDが付与されたファイルのみ削除可能
       // （アプリ側のコードで `${uid}_${timestamp}_...` の形式で保存される前提）
       allow delete: if request.auth != null
-          && request.appCheck != null
+          // && request.appCheck != null
           && filename.matches(request.auth.uid + '_.*');
     }
   }
