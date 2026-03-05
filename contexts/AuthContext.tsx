@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged, signInAnonymously } from "firebase/auth";
-import { auth, db, appCheckReady, isConfigured } from "@/lib/firebase";
+import { auth, db, appCheck, appCheckReady, isConfigured } from "@/lib/firebase";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface AuthContextType {
@@ -53,6 +53,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     await appCheckReady;
                     // SDK内でのAppCheckトークンのFirestoreへの浸透を待つためのバッファ
                     await new Promise(resolve => setTimeout(resolve, 500));
+
+                    if (appCheck) {
+                        try {
+                            const { getToken } = await import("firebase/app-check");
+                            const tokenResult = await getToken(appCheck, false);
+                            console.log("App Check token before setDoc:", tokenResult.token ? "EXISTS" : "MISSING");
+                        } catch (e) {
+                            console.error("Failed to verify App Check token before setDoc:", e);
+                        }
+                    }
+
                     await setDoc(
                         doc(db, "users", user.uid),
                         {

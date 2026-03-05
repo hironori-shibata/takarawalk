@@ -63,6 +63,9 @@ if (isConfigured) {
             }
         }
 
+        // IMPORTANT: Initialize Auth, Firestore, and Storage AFTER App Check is initialized
+        // This prevents a known SDK issue where services initialized before App Check
+        // might cache a state where they don't attach tokens to their requests.
         auth = getAuth(app);
         db = getFirestore(app);
         storage = getStorage(app);
