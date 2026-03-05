@@ -8,7 +8,7 @@ export default function TutorialSection() {
     const [isSolver, setIsSolver] = useState(true);
 
     return (
-        <section className="px-6 py-20 max-w-5xl mx-auto w-full">
+        <section id="tutorial" className="px-6 py-20 max-w-5xl mx-auto w-full">
             <h2 className="font-[family-name:var(--font-orbitron)] text-2xl sm:text-3xl font-bold text-center neon-text-blue mb-8">
                 TUTORIAL
             </h2>

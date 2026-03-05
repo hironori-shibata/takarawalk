@@ -183,7 +183,7 @@ export default function HomePage() {
             </section>
 
             {/* Recent Puzzles Section */}
-            <section className="px-6 py-20 max-w-4xl mx-auto">
+            <section id="recent-puzzles" className="px-6 py-20 max-w-4xl mx-auto">
                 <h2 className="font-[family-name:var(--font-orbitron)] text-2xl sm:text-3xl font-bold text-center neon-text-pink mb-8">
                     RECENT PUZZLES
                 </h2>

@@ -35,6 +35,14 @@ if (isConfigured) {
 
         // App Check — クライアント側かつサイトキーが提供されている場合のみ初期化
         if (typeof window !== "undefined") {
+            // ローカル開発環境向けの AppCheck デバッグ対応
+            if (process.env.NODE_ENV === "development" || window.location.hostname === "localhost") {
+                // すでに環境変数にトークンがあればそれを使用、なければ true を設定して自動生成させる
+                (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN =
+                    process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_DEBUG_TOKEN || true;
+                console.log("🛠️ App Check Local Debug Mode is ON");
+            }
+
             const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
             if (siteKey) {
                 // Next.js の HMR 等での二重初期化を防ぎ、インスタンスを再利用

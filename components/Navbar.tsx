@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { signOut } from "@/lib/auth";
-import { FiLogIn, FiLogOut, FiPlus, FiShield, FiUser } from "react-icons/fi";
+import { FiLogIn, FiLogOut, FiPlus, FiShield, FiUser, FiBookOpen, FiClock } from "react-icons/fi";
 
 export default function Navbar() {
     const { user, loading, openLoginModal } = useAuth();
@@ -24,6 +24,22 @@ export default function Navbar() {
             </Link>
 
             <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 border-r border-cyber-border pr-2 sm:pr-4">
+                    <Link
+                        href="/#tutorial"
+                        className="p-2 text-text-muted hover:text-neon-blue transition-colors"
+                        title="チュートリアル"
+                    >
+                        <FiBookOpen size={20} />
+                    </Link>
+                    <Link
+                        href="/#recent-puzzles"
+                        className="p-2 text-text-muted hover:text-neon-pink transition-colors"
+                        title="最近の投稿"
+                    >
+                        <FiClock size={20} />
+                    </Link>
+                </div>
                 {!loading && (
                     <>
                         {isLoggedIn ? (
