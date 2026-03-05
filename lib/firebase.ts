@@ -47,18 +47,19 @@ if (isConfigured) {
                 appCheck = (window as any).__appCheckInstance;
 
                 // 初期化直後にトークン取得を開始し、完了するまで appCheckReady で待機可能にする。
-                // この getToken の完了により SDK 内部のトークンキャッシュが確実に埋まり、
-                // 以降のリクエストにトークンが付与されることを保証する。
                 if (appCheck) {
                     appCheckReady = getToken(appCheck, false)
                         .then(() => {
-                            // トークン取得成功 — 以降の SDK リクエストはトークン付きになる
+                            console.log("App Check token fetched successfully.");
                         })
                         .catch((err) => {
-                            console.warn("App Check initial token fetch failed:", err);
-                            // 失敗してもアプリは継続（ルールで弾かれる可能性はある）
+                            console.error("❌ App Check initial token fetch failed! This is why Firestore/Storage is denying requests:", err);
+                            throw err; // エラーを握りつぶさず、呼び出し元に伝播させる
                         });
                 }
+            } else {
+                console.error("❌ NEXT_PUBLIC_RECAPTCHA_SITE_KEY is NOT set in the environment variables! App Check will not be initialized, causing all writes to fail.");
+                appCheckReady = Promise.reject(new Error("Missing reCAPTCHA Site Key in environment variables."));
             }
         }
 
