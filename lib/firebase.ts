@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
-import { initializeAppCheck, ReCaptchaV3Provider, AppCheck, getToken } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, AppCheck, getToken } from "firebase/app-check";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -40,7 +40,7 @@ if (isConfigured) {
                 // Next.js の HMR 等での二重初期化を防ぎ、インスタンスを再利用
                 if (!(window as any).__appCheckInstance) {
                     (window as any).__appCheckInstance = initializeAppCheck(app, {
-                        provider: new ReCaptchaV3Provider(siteKey),
+                        provider: new ReCaptchaEnterpriseProvider(siteKey),
                         isTokenAutoRefreshEnabled: true,
                     });
                 }
