@@ -1,31 +1,5 @@
 import { Metadata } from "next";
 
-// Helper function to fetch puzzle data using Firebase REST API
-// This avoids using the client SDK on the server, which would trigger unverified App Check requests
-async function fetchPuzzleRest(id: string) {
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!projectId) return null;
-
-    try {
-        const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/puzzles/${id}`;
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) return null;
-
-        const data = await res.json();
-        if (!data.fields) return null;
-
-        // Extract fields from Firestore REST format
-        return {
-            title: data.fields.title?.stringValue,
-            description: data.fields.description?.stringValue,
-            creatorName: data.fields.creatorName?.stringValue,
-            imageUrl: data.fields.imageUrl?.stringValue,
-        };
-    } catch {
-        return null;
-    }
-}
-
 type Props = {
     params: Promise<{ id: string }>;
 };
@@ -33,20 +7,12 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { id } = await params;
 
-    let title = "nazo 1 - 謎解き";
-    let description = "先着1名のみがクリアできる謎解き共有バトル";
-    let imageUrl: string | undefined;
-
-    try {
-        const data = await fetchPuzzleRest(id);
-        if (data) {
-            title = `${data.title} | nazo 1`;
-            description = data.description || `${data.creatorName}が投稿した謎解きに挑戦！先着1名のみがクリアできる。`;
-            imageUrl = data.imageUrl;
-        }
-    } catch {
-        // Use defaults on error
-    }
+    // OGP メタデータは静的なデフォルトを使用。
+    // サーバー側から Firestore にアクセスすると App Check トークンなしのリクエストが発生し、
+    // Firebase 監視ツールで「未検証のリクエスト」としてカウントされてしまうため避ける。
+    const title = "nazo 1 - 謎解き";
+    const description = "先着1名のみがクリアできる謎解き共有バトル";
+    const puzzleUrl = `${process.env.NEXT_PUBLIC_SITE_URL || ""}/puzzle/${id}`;
 
     return {
         title,
@@ -55,15 +21,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             title,
             description,
             type: "website",
-            ...(imageUrl && {
-                images: [{ url: imageUrl, width: 1200, height: 630 }],
-            }),
+            url: puzzleUrl,
         },
         twitter: {
-            card: imageUrl ? "summary_large_image" : "summary",
+            card: "summary",
             title,
             description,
-            ...(imageUrl && { images: [imageUrl] }),
         },
     };
 }

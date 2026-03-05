@@ -72,6 +72,7 @@ export default function UserProfilePage() {
 
         async function fetchData() {
             try {
+                await appCheckReady;
                 // Fetch user profile
                 const userDoc = await getDoc(doc(db!, "users", userId));
                 if (userDoc.exists()) {

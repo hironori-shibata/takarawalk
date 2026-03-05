@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/lib/firebase";
+import { db, appCheckReady } from "@/lib/firebase";
 import {
     collection,
     query,
@@ -48,6 +48,7 @@ export default function HomePage() {
             if (append) setLoadingMore(true);
 
             try {
+                await appCheckReady;
                 const constraints = [
                     collection(db, "puzzles"),
                 ];
