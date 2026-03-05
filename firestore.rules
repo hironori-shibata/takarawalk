@@ -133,8 +133,8 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['displayName', 'photoURL', 'lastLoginAt', 'socialLinks'])
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() > 0
-          && request.resource.data.displayName.size() <= 50
-          && (!request.resource.data.keys().hasAny(['photoURL']) || (request.resource.data.photoURL is string && request.resource.data.photoURL.size() <= 500))
+          && request.resource.data.displayName.size() <= 100
+          && (!request.resource.data.keys().hasAny(['photoURL']) || (request.resource.data.photoURL is string && request.resource.data.photoURL.size() <= 2000))
           && (!request.resource.data.keys().hasAny(['socialLinks']) || (
               request.resource.data.socialLinks is map
               && request.resource.data.socialLinks.keys().hasOnly(['twitter', 'instagram', 'github'])
@@ -148,8 +148,8 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastLoginAt', 'socialLinks'])
           && request.resource.data.displayName is string
           && request.resource.data.displayName.size() > 0
-          && request.resource.data.displayName.size() <= 50
-          && (!request.resource.data.keys().hasAny(['photoURL']) || (request.resource.data.photoURL is string && request.resource.data.photoURL.size() <= 500))
+          && request.resource.data.displayName.size() <= 100
+          && (!request.resource.data.keys().hasAny(['photoURL']) || (request.resource.data.photoURL is string && request.resource.data.photoURL.size() <= 2000))
           && (!request.resource.data.keys().hasAny(['socialLinks']) || (
               request.resource.data.socialLinks is map
               && request.resource.data.socialLinks.keys().hasOnly(['twitter', 'instagram', 'github'])

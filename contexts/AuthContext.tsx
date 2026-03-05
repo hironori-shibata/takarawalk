@@ -51,6 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 try {
                     // App Check トークンが SDK にキャッシュされるのを待ってから書き込む
                     await appCheckReady;
+                    // SDK内でのAppCheckトークンのFirestoreへの浸透を待つためのバッファ
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     await setDoc(
                         doc(db, "users", user.uid),
                         {
