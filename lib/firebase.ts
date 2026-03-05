@@ -2,7 +2,7 @@ import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider, AppCheck, getToken } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider, AppCheck, getToken, CustomProvider } from "firebase/app-check";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -39,8 +39,38 @@ if (isConfigured) {
             if (siteKey) {
                 // Next.js の HMR 等での二重初期化を防ぎ、インスタンスを再利用
                 if (!(window as any).__appCheckInstance) {
+
+                    // 標準の Provider をラップして、確実にトークンをキャッシュして返す Custom Provider を作成
+                    // (Next.js 内で参照が飛んで request.appCheck == null になるバグを力技で回避する)
+
+                    // ReCaptchaEnterpriseProvider は internal な getToken を持つため、
+                    // any キャストして呼び出し、公開型の AppCheckToken に変換して返す
+                    const baseProvider = new ReCaptchaEnterpriseProvider(siteKey);
+                    let cachedToken: { token: string; expireTimeMillis: number } | null = null;
+
+                    const customProvider = new CustomProvider({
+                        getToken: async () => {
+                            if (cachedToken && cachedToken.expireTimeMillis > Date.now() + 5 * 60 * 1000) {
+                                // 有効期限が5分以上残っているキャッシュがあれば即座に返す
+                                return cachedToken;
+                            }
+                            try {
+                                const tokenResult = await (baseProvider as any).getToken();
+                                const publicToken = {
+                                    token: tokenResult.token,
+                                    expireTimeMillis: tokenResult.expireTimeMillis
+                                };
+                                cachedToken = publicToken;
+                                return publicToken;
+                            } catch (e) {
+                                console.error("Base Provider failed to get token:", e);
+                                throw e;
+                            }
+                        }
+                    });
+
                     (window as any).__appCheckInstance = initializeAppCheck(app, {
-                        provider: new ReCaptchaEnterpriseProvider(siteKey),
+                        provider: customProvider,
                         isTokenAutoRefreshEnabled: true,
                     });
                 }
@@ -50,7 +80,7 @@ if (isConfigured) {
                 if (appCheck) {
                     appCheckReady = getToken(appCheck, false)
                         .then(() => {
-                            console.log("App Check token fetched successfully.");
+                            console.log("App Check token fetched successfully (Custom Provider).");
                         })
                         .catch((err) => {
                             console.error("❌ App Check initial token fetch failed! This is why Firestore/Storage is denying requests:", err);
